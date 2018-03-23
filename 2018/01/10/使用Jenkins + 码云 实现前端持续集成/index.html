@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>使用Jenkins + 码云 实现前端持续集成 | (　ﾟ∀ﾟ) ﾉ♡</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <meta name="keywords" content="Jenkins nodejs" />
+  
+  
+  
+  
+  <meta name="description" content="使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成 [toc]  1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\Users\gf\.jenkins)建议使用war包进行安装下载（需求jdk &amp;gt; 8环境） 1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=">
+<meta name="keywords" content="Jenkins nodejs">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Jenkins + 码云 实现前端持续集成">
+<meta property="og:url" content="http://yoursite.com/2018/01/10/使用Jenkins + 码云 实现前端持续集成/index.html">
+<meta property="og:site_name" content="(　ﾟ∀ﾟ) ﾉ♡">
+<meta property="og:description" content="使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成 [toc]  1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\Users\gf\.jenkins)建议使用war包进行安装下载（需求jdk &amp;gt; 8环境） 1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://static.zybuluo.com/gao1994/kgvedncieq5caeq7nzf4uzu4/image_1c3k2nj501lop1dbu1sduj001qk1m.png">
+<meta property="og:image" content="http://static.zybuluo.com/gao1994/y53htlc21m5usuoczl8sveor/image_1c3hqf8pa10tc1s7s1nnepnu1sjo9.png">
+<meta property="og:image" content="http://static.zybuluo.com/gao1994/b69sk952t7q4bmembbyus78g/image_1c5kfmnkf158d1b311otav31rru9.png">
+<meta property="og:image" content="http://static.zybuluo.com/gao1994/mjahcx9okyjuh5ibarbxmph2/image_1c5kfpcueb635e1apv1l8dqv9m.png">
+<meta property="og:image" content="http://static.zybuluo.com/gao1994/8f891lndfw51ikd4xoto6741/image_1c5kfr1bm1gi61jc71df1at717eb13.png">
+<meta property="og:updated_time" content="2018-03-23T03:29:43.288Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用Jenkins + 码云 实现前端持续集成">
+<meta name="twitter:description" content="使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成 [toc]  1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\Users\gf\.jenkins)建议使用war包进行安装下载（需求jdk &amp;gt; 8环境） 1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=">
+<meta name="twitter:image" content="http://static.zybuluo.com/gao1994/kgvedncieq5caeq7nzf4uzu4/image_1c3k2nj501lop1dbu1sduj001qk1m.png">
+  
+    <link rel="alternate" href="/atom.xml" title="(　ﾟ∀ﾟ) ﾉ♡" type="application/atom+xml">
+  
+  <link rel="icon" href="/css/images/favicon.ico">
+  
+    <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Montserrat:700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic" rel="stylesheet" type="text/css">
+  <link href="//cdn.bootcss.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+  <style type="text/css">
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/9749f0/00000000000000000001008f/27/l?subset_id=2&fvd=n5) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/90cf9f/000000000000000000010091/27/l?subset_id=2&fvd=n7) format("woff2");font-weight:500;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/8a5494/000000000000000000013365/27/l?subset_id=2&fvd=n4) format("woff2");font-weight:lighter;font-style:normal;}
+    @font-face{font-family:futura-pt;src:url(https://use.typekit.net/af/d337d8/000000000000000000010095/27/l?subset_id=2&fvd=i4) format("woff2");font-weight:400;font-style:italic;}</style>
+    
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Yanone+Kaffeesatz%3A200%2C300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+
+  <link rel="stylesheet" id="athemes-headings-fonts-css" href="//fonts.googleapis.com/css?family=Oswald%3A300%2C400%2C700&amp;ver=4.6.1" type="text/css" media="all">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+
+  <!-- Bootstrap core CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.css" >
+  <link rel="stylesheet" href="/css/fashion.css" >
+  <link rel="stylesheet" href="/css/glyphs.css" >
+
+</head>
+
+
+
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
+
+
+  
+  
+  <div class="site-header-image">
+    <img id="originBg" width="100%" alt="Hike News" src="">
+  </div>
+
+  <div id="header-blur" class="site-header-image blur" style="position: absolute; top:0; height: 207px; min-height: 207px; min-width: 100%;">
+    <img id="blurBg" width="100%" style="top: 96%" alt="Hike News" src="">
+  </div>
+
+  <script>
+        var imgUrls = "css/images/pose01.jpg,https://source.unsplash.com/collection/954550/1920x1080,https://source.unsplash.com/collection/954550/1920x1081".split(",");
+        var random = Math.floor((Math.random() * imgUrls.length ));
+        if (imgUrls[random].startsWith('http') || imgUrls[random].indexOf('://') >= 0) {
+          document.getElementById("originBg").src=imgUrls[random];
+          document.getElementById("blurBg").src=imgUrls[random];
+        } else {
+          document.getElementById("originBg").src='/' + imgUrls[random];
+          document.getElementById("blurBg").src='/' + imgUrls[random];
+        }
+    </script>
+
+
+
+
+<header id="allheader" class="site-header" role="banner" 
+   style="width: 100%; position: absolute; top:0; background: rgba(255,255,255,.8);"  >
+  <div class="clearfix container">
+      <div class="site-branding">
+
+          <h1 class="site-title">
+            
+              <a href="/" title="(　ﾟ∀ﾟ) ﾉ♡" rel="home"> (　ﾟ∀ﾟ) ﾉ♡ </a>
+            
+          </h1>
+          
+          
+            
+          <nav id="main-navigation" class="main-navigation" role="navigation">
+            <a class="nav-open">Menu</a>
+            <a class="nav-close">Close</a>
+
+            <div class="clearfix sf-menu">
+              <ul id="main-nav" class="menu sf-js-enabled sf-arrows"  style="touch-action: pan-y;">
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/">首页</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/archives">归档</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/categories">分类</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/tags">标签</a> </li>
+                    
+                      <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1663"> <a class="" href="/about">关于</a> </li>
+                    
+              </ul>
+            </div>
+          </nav>
+
+      </div>
+  </div>
+</header>
+
+
+  <div id="container">
+    <div id="wrap">
+            
+      <div id="content" class="outer">
+        
+          <section id="main" style="float:none;"><article id="w-使用Jenkins + 码云 实现前端持续集成" style="width: 66%; float:left;" class="article article-type-w" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="clearfix post-1016 post type-post status-publish format-standard has-post-thumbnail hentry category-template-2 category-uncategorized tag-codex tag-edge-case tag-featured-image tag-image tag-template">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      使用Jenkins + 码云 实现前端持续集成
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2018/01/10/使用Jenkins + 码云 实现前端持续集成/" class="article-date">
+	  <time datetime="2018-01-10T07:29:07.000Z" itemprop="datePublished">一月 10, 2018</time>
+	</a>
+
+       
+      
+	<span id="busuanzi_container_page_pv">
+	  本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+	</span>
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="使用Jenkins-码云-实现前端持续集成"><a href="#使用Jenkins-码云-实现前端持续集成" class="headerlink" title="使用Jenkins + 码云 实现前端持续集成"></a>使用Jenkins + 码云 实现前端持续集成</h1><p>标签（空格分隔）： Jenkins 持续集成</p>
+<p>[toc]</p>
+<hr>
+<h2 id="1-安装"><a href="#1-安装" class="headerlink" title="1. 安装"></a><strong>1. 安装</strong></h2><p><code>JENKINS_HOME</code> 根目录默认设置在 <code>~/.jenkins</code>。（win: <code>C:\Users\gf\.jenkins</code>)<br>建议使用war包进行安装<a href="https://wiki.jenkins.io/display/JENKINS/Installing+Jenkins" target="_blank" rel="noopener">下载</a>（需求<code>jdk</code> &gt; 8环境）</p>
+<h3 id="1-1-war包"><a href="#1-1-war包" class="headerlink" title="1.1 war包"></a><strong>1.1 war包</strong></h3><p>在指定端口开启服务<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar jenkins.war --httpPort=8008</span><br></pre></td></tr></table></figure></p>
+<h3 id="1-2-exe文件安装"><a href="#1-2-exe文件安装" class="headerlink" title="1.2 exe文件安装"></a><strong>1.2 exe文件安装</strong></h3><p>安装完会在8080启动服务</p>
+<p>可在 <code>Jenkins/jenkins.xml</code> 中<code>arguments</code>设置httpPort字段默认端口。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">// JENKINS_HOME 目录下</span><br><span class="line">net start jenkins // 开启服务</span><br><span class="line">net end jenkins // 关闭</span><br></pre></td></tr></table></figure>
+<h2 id="2-相关插件安装"><a href="#2-相关插件安装" class="headerlink" title="2. 相关插件安装"></a><strong>2. 相关插件安装</strong></h2><p>安装推荐的插件即可。<br>其他重要的插件：</p>
+<ul>
+<li>NodeJS Plugin</li>
+<li>Generic Webhook Trigger</li>
+</ul>
+<h2 id="3-配置环境变量"><a href="#3-配置环境变量" class="headerlink" title="3. 配置环境变量"></a><strong>3. 配置环境变量</strong></h2><p><img src="http://static.zybuluo.com/gao1994/kgvedncieq5caeq7nzf4uzu4/image_1c3k2nj501lop1dbu1sduj001qk1m.png" alt="image_1c3k2nj501lop1dbu1sduj001qk1m.png-29.6kB"></p>
+<h2 id="4-webhook配置"><a href="#4-webhook配置" class="headerlink" title="4. webhook配置"></a><strong>4. webhook配置</strong></h2><p>需求插件： <code>Generic Webhook Trigger</code> </p>
+<h3 id="4-1-码云端配置："><a href="#4-1-码云端配置：" class="headerlink" title="4.1 码云端配置："></a>4.1 码云端配置：</h3><p><a href="http://git.mydoc.io/?t=154711" target="_blank" rel="noopener">相关文档</a></p>
+<p>在“系统管理–管理用户–用户列表–admin处点击进去–左边侧边栏–设置”设置用户<code>API Token</code>、<code>User ID</code></p>
+<p>URL格式:</p>
+<pre><code>http://&lt;User ID&gt;:&lt;API Token&gt;@&lt;Jenkins IP地址&gt;:端口/generic-webhook-trigger/invoke 
+http://有读权限的用户名:该用户名Token@jenkis地址/generic-webhook-trigger/invoke
+</code></pre><p>参考：</p>
+<pre><code>http://gf:36c780ecc06beefa242b9cd9083c0260@118.178.94.163:8001/generic-webhook-trigger/invoke
+</code></pre><p>测试成功的返回:</p>
+<p><img src="http://static.zybuluo.com/gao1994/y53htlc21m5usuoczl8sveor/image_1c3hqf8pa10tc1s7s1nnepnu1sjo9.png" alt="image_1c3hqf8pa10tc1s7s1nnepnu1sjo9.png-25.5kB"></p>
+<h3 id="4-2-Jenkins配置："><a href="#4-2-Jenkins配置：" class="headerlink" title="4.2 Jenkins配置："></a>4.2 Jenkins配置：</h3><p> <a href="https://github.com/json-path/JsonPath" target="_blank" rel="noopener">jsonPath文档</a></p>
+<p>从码云的返回筛选字段</p>
+<p><img src="http://static.zybuluo.com/gao1994/b69sk952t7q4bmembbyus78g/image_1c5kfmnkf158d1b311otav31rru9.png" alt="image_1c5kfmnkf158d1b311otav31rru9.png-31.8kB"><br><img src="http://static.zybuluo.com/gao1994/mjahcx9okyjuh5ibarbxmph2/image_1c5kfpcueb635e1apv1l8dqv9m.png" alt="image_1c5kfpcueb635e1apv1l8dqv9m.png-9kB"></p>
+<p>过滤项目<br><img src="http://static.zybuluo.com/gao1994/8f891lndfw51ikd4xoto6741/image_1c5kfr1bm1gi61jc71df1at717eb13.png" alt="image_1c5kfr1bm1gi61jc71df1at717eb13.png-14.9kB"></p>
+<h2 id="5-构建步骤"><a href="#5-构建步骤" class="headerlink" title="5. 构建步骤"></a><strong>5. 构建步骤</strong></h2><p>todo</p>
+<h2 id="6-邮件提醒配置"><a href="#6-邮件提醒配置" class="headerlink" title="6. 邮件提醒配置"></a><strong>6. 邮件提醒配置</strong></h2><p>todo</p>
+
+      
+    </div>
+    <footer class="entry-meta entry-footer">
+      
+      
+  <span class="ico-tags"></span>
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Jenkins-nodejs/">Jenkins nodejs</a></li></ul>
+
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTQ4MS82MDQ5">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+    </footer>
+    <hr class="entry-footer-hr">
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2018/03/23/hello-world/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">上一篇</strong>
+      <div class="article-nav-title">
+        
+          Hello World
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2017/03/22/es6 特性之bind-operator/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">下一篇</strong>
+      <div class="article-nav-title">es6 特性之bind-operator</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+<!-- Table of Contents -->
+
+  <aside id="sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    
+      <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#使用Jenkins-码云-实现前端持续集成"><span class="nav-number">1.</span> <span class="nav-text">使用Jenkins + 码云 实现前端持续集成</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-安装"><span class="nav-number">1.1.</span> <span class="nav-text">1. 安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-war包"><span class="nav-number">1.1.1.</span> <span class="nav-text">1.1 war包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-exe文件安装"><span class="nav-number">1.1.2.</span> <span class="nav-text">1.2 exe文件安装</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-相关插件安装"><span class="nav-number">1.2.</span> <span class="nav-text">2. 相关插件安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-配置环境变量"><span class="nav-number">1.3.</span> <span class="nav-text">3. 配置环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-webhook配置"><span class="nav-number">1.4.</span> <span class="nav-text">4. webhook配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-码云端配置："><span class="nav-number">1.4.1.</span> <span class="nav-text">4.1 码云端配置：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-Jenkins配置："><span class="nav-number">1.4.2.</span> <span class="nav-text">4.2 Jenkins配置：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-构建步骤"><span class="nav-number">1.5.</span> <span class="nav-text">5. 构建步骤</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#6-邮件提醒配置"><span class="nav-number">1.6.</span> <span class="nav-text">6. 邮件提醒配置</span></a></li></ol></li></ol>
+    
+    </div>
+  </aside>
+</section>
+        
+      </div>
+
+    </div>
+    <!-- <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/categories" class="mobile-nav-link">Categories</a>
+  
+    <a href="/tags" class="mobile-nav-link">Tags</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav> -->
+    <footer id="footer" class="site-footer">
+  
+
+  <div class="clearfix container">
+      <div class="site-info">
+	      &copy; 2018 (　ﾟ∀ﾟ) ﾉ♡ All Rights Reserved.
+        
+            <span id="busuanzi_container_site_uv">
+              本站访客数<span id="busuanzi_value_site_uv"></span>人次  
+              本站总访问量<span id="busuanzi_value_site_pv"></span>次
+            </span>
+          
+      </div>
+      <div class="site-credit">
+        Theme by <a href="https://github.com/iTimeTraveler/hexo-theme-hipaper" target="_blank">hipaper</a>
+      </div>
+  </div>
+</footer>
+
+
+<!-- min height -->
+
+<script>
+    var wrapdiv = document.getElementById("wrap");
+    var contentdiv = document.getElementById("content");
+
+    wrapdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+    contentdiv.style.minHeight = document.body.offsetHeight - document.getElementById("allheader").offsetHeight - document.getElementById("footer").offsetHeight + "px";
+
+
+    <!-- headerblur min height -->
+    
+      var headerblur = document.getElementById("header-blur");
+      headerblur.style.minHeight = window.getComputedStyle(document.getElementById("allheader"), null).height;
+    
+    
+</script>
+    
+<div style="display: none;">
+  <script src="https://s11.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+</div>
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  <script src="/fancybox/jquery.fancybox.pack.js"></script>
+
+
+<script src="/js/script.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/main.js"></script>
+
+
+
+
+
+
+
+  <div style="display: none;">
+    <script src="https://s95.cnzz.com/z_stat.php?id=1260716016&web_id=1260716016" language="JavaScript"></script>
+  </div>
+
+
+
+	<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+	</script>
+
+
+
+
+
+
+  </div>
+
+  <a id="rocket" href="#top" class=""></a>
+  <script type="text/javascript" src="/js/totop.js" async=""></script>
+</body>
+</html>
