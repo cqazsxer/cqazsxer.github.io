@@ -11,7 +11,7 @@
     
     
     
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Feng","sameAs":[]},"articleBody":"使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成\n[toc]\n\n1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\\Users\\gf\\.jenkins)建议使用war包进行安装下载（需求jdk &gt; 8环境）\n1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=8008\n1.2 exe文件安装安装完会在8080启动服务\n可在 Jenkins/jenkins.xml 中arguments设置httpPort字段默认端口。\n123// JENKINS_HOME 目录下net start jenkins // 开启服务net end jenkins // 关闭\n2. 相关插件安装安装推荐的插件即可。其他重要的插件：\n\nNodeJS Plugin\nGeneric Webhook Trigger\n\n3. 配置环境变量\n4. webhook配置需求插件： Generic Webhook Trigger \n4.1 码云端配置：相关文档\n在“系统管理–管理用户–用户列表–admin处点击进去–左边侧边栏–设置”设置用户API Token、User ID\nURL格式:\nhttp://&lt;User ID&gt;:&lt;API Token&gt;@&lt;Jenkins IP地址&gt;:端口/generic-webhook-trigger/invoke \nhttp://有读权限的用户名:该用户名Token@jenkis地址/generic-webhook-trigger/invoke\n参考：\nhttp://gf:36c780ecc06beefa242b9cd9083c0260@118.178.94.163:8001/generic-webhook-trigger/invoke\n测试成功的返回:\n\n4.2 Jenkins配置： jsonPath文档\n从码云的返回筛选字段\n\n过滤项目\n5. 构建步骤todo\n6. 邮件提醒配置todo\n","dateCreated":"2018-01-10T15:29:07+08:00","dateModified":"2018-03-23T11:29:43+08:00","datePublished":"2018-01-10T15:29:07+08:00","description":"","headline":"使用Jenkins + 码云 实现前端持续集成","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2018/01/10/使用Jenkins + 码云 实现前端持续集成/"},"publisher":{"@type":"Organization","name":"Feng","sameAs":[]},"url":"http://yoursite.com/2018/01/10/使用Jenkins + 码云 实现前端持续集成/","keywords":"Jenkins nodejs"}</script>
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Feng","sameAs":[]},"articleBody":"使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成\n[toc]\n\n1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\\Users\\gf\\.jenkins)建议使用war包进行安装下载（需求jdk &gt; 8环境）\n1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=8008\n1.2 exe文件安装安装完会在8080启动服务\n可在 Jenkins/jenkins.xml 中arguments设置httpPort字段默认端口。\n123// JENKINS_HOME 目录下net start jenkins // 开启服务net end jenkins // 关闭\n2. 相关插件安装安装推荐的插件即可。其他重要的插件：\n\nNodeJS Plugin\nGeneric Webhook Trigger\n\n3. 配置环境变量\n4. webhook配置需求插件： Generic Webhook Trigger \n4.1 码云端配置：相关文档\n在“系统管理–管理用户–用户列表–admin处点击进去–左边侧边栏–设置”设置用户API Token、User ID\nURL格式:\nhttp://&lt;User ID&gt;:&lt;API Token&gt;@&lt;Jenkins IP地址&gt;:端口/generic-webhook-trigger/invoke \nhttp://有读权限的用户名:该用户名Token@jenkis地址/generic-webhook-trigger/invoke\n参考：\nhttp://gf:36c780ecc06beefa242b9cd9083c0260@118.178.94.163:8001/generic-webhook-trigger/invoke\n测试成功的返回:\n\n4.2 Jenkins配置： jsonPath文档\n从码云的返回筛选字段\n\n过滤项目\n5. 构建步骤todo\n6. 邮件提醒配置todo \n","dateCreated":"2018-01-10T15:29:07+08:00","dateModified":"2018-04-02T09:04:37+08:00","datePublished":"2018-01-10T15:29:07+08:00","description":"","headline":"使用Jenkins + 码云 实现前端持续集成","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2018/01/10/使用Jenkins + 码云 实现前端持续集成/"},"publisher":{"@type":"Organization","name":"Feng","sameAs":[]},"url":"http://yoursite.com/2018/01/10/使用Jenkins + 码云 实现前端持续集成/","keywords":"Jenkins nodejs"}</script>
     <meta name="description" content="使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成 [toc]  1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\Users\gf\.jenkins)建议使用war包进行安装下载（需求jdk &amp;gt; 8环境） 1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=">
 <meta name="keywords" content="Jenkins nodejs">
 <meta property="og:type" content="blog">
@@ -25,7 +25,7 @@
 <meta property="og:image" content="http://static.zybuluo.com/gao1994/b69sk952t7q4bmembbyus78g/image_1c5kfmnkf158d1b311otav31rru9.png">
 <meta property="og:image" content="http://static.zybuluo.com/gao1994/mjahcx9okyjuh5ibarbxmph2/image_1c5kfpcueb635e1apv1l8dqv9m.png">
 <meta property="og:image" content="http://static.zybuluo.com/gao1994/8f891lndfw51ikd4xoto6741/image_1c5kfr1bm1gi61jc71df1at717eb13.png">
-<meta property="og:updated_time" content="2018-03-23T03:29:43.288Z">
+<meta property="og:updated_time" content="2018-04-02T01:04:37.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用Jenkins + 码云 实现前端持续集成">
 <meta name="twitter:description" content="使用Jenkins + 码云 实现前端持续集成标签（空格分隔）： Jenkins 持续集成 [toc]  1. 安装JENKINS_HOME 根目录默认设置在 ~/.jenkins。（win: C:\Users\gf\.jenkins)建议使用war包进行安装下载（需求jdk &amp;gt; 8环境） 1.1 war包在指定端口开启服务1java -jar jenkins.war --httpPort=">
@@ -244,7 +244,7 @@ http://有读权限的用户名:该用户名Token@jenkis地址/generic-webhook-t
 <p><img src="http://static.zybuluo.com/gao1994/b69sk952t7q4bmembbyus78g/image_1c5kfmnkf158d1b311otav31rru9.png" alt="image_1c5kfmnkf158d1b311otav31rru9.png-31.8kB"><br><img src="http://static.zybuluo.com/gao1994/mjahcx9okyjuh5ibarbxmph2/image_1c5kfpcueb635e1apv1l8dqv9m.png" alt="image_1c5kfpcueb635e1apv1l8dqv9m.png-9kB"></p>
 <p>过滤项目<br><img src="http://static.zybuluo.com/gao1994/8f891lndfw51ikd4xoto6741/image_1c5kfr1bm1gi61jc71df1at717eb13.png" alt="image_1c5kfr1bm1gi61jc71df1at717eb13.png-14.9kB"></p>
 <h2 id="5-构建步骤"><a href="#5-构建步骤" class="headerlink" title="5. 构建步骤"></a><strong>5. 构建步骤</strong></h2><p>todo</p>
-<h2 id="6-邮件提醒配置"><a href="#6-邮件提醒配置" class="headerlink" title="6. 邮件提醒配置"></a><strong>6. 邮件提醒配置</strong></h2><p>todo</p>
+<h2 id="6-邮件提醒配置"><a href="#6-邮件提醒配置" class="headerlink" title="6. 邮件提醒配置"></a><strong>6. 邮件提醒配置</strong></h2><p>todo </p>
 
             
 
