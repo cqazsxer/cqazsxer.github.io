@@ -8,8 +8,7 @@
       <url>http://yoursite.com/2018/04/01/flex%E9%80%9F%E6%9F%A5%E6%89%8B%E5%86%8C/</url>
       <content type="html"><![CDATA[<h1 id="flex速查手册"><a href="#flex速查手册" class="headerlink" title="flex速查手册"></a>flex速查手册</h1><p>标签（空格分隔）： css flex</p>
 <p>[toc]</p>
-<h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://www.w3cplus.com/sites/default/files/blogs/2017/1703/flexbox1.png" alt="此处输入图片的描述"></h2><h2 id="1-Flex容器属性"><a href="#1-Flex容器属性" class="headerlink" title="1. Flex容器属性"></a><strong>1. Flex容器属性</strong></h2><hr>
-<blockquote>
+<h2 id=""><a href="#" class="headerlink" title=""></a><img src="https://www.w3cplus.com/sites/default/files/blogs/2017/1703/flexbox1.png" alt="此处输入图片的描述"></h2><h2 id="1-Flex容器属性"><a href="#1-Flex容器属性" class="headerlink" title="1. Flex容器属性"></a><strong>1. Flex容器属性</strong></h2><blockquote>
 <ul>
 <li><strong><code>flex-direction</code></strong> 控制Flex项目在<code>Main-Axis</code>上的排列方向。<ul>
 <li><code>row</code> ：沿着<code>Main-Axis</code><strong>从左向右，水平排列</strong>。(另<code>row-reverse</code> )</li>
@@ -45,8 +44,7 @@
 </li>
 </ul>
 </blockquote>
-<h2 id="2-Flex项目属性"><a href="#2-Flex项目属性" class="headerlink" title="2. Flex项目属性"></a><strong>2. Flex项目属性</strong></h2><hr>
-<blockquote>
+<h2 id="2-Flex项目属性"><a href="#2-Flex项目属性" class="headerlink" title="2. Flex项目属性"></a><strong>2. Flex项目属性</strong></h2><blockquote>
 <ul>
 <li><strong><code>flex-grow</code></strong> 默认为 <code>0</code> 有额外空间保持自身宽度； <code>1</code>: 有额外空间会撑开（<em>grow</em>了）。</li>
 <li><strong><code>flex-shrink</code></strong> 默认为 <code>1</code> ,  没有额外空间保持自身宽度; <code>0</code>: 维持<strong>被压缩平均</strong>的宽度。</li>
@@ -71,8 +69,7 @@
 </li>
 </ul>
 </blockquote>
-<h2 id="3-Auto-margin-对齐"><a href="#3-Auto-margin-对齐" class="headerlink" title="3. Auto-margin 对齐"></a><strong>3. Auto-margin 对齐</strong></h2><hr>
-<blockquote>
+<h2 id="3-Auto-margin-对齐"><a href="#3-Auto-margin-对齐" class="headerlink" title="3. Auto-margin 对齐"></a><strong>3. Auto-margin 对齐</strong></h2><blockquote>
 <p>当在Flex项目上使用 <code>margin: auto</code> 时，值为<code>auto</code> 的方向（左、右或者二者都是）会占据所有剩余空间。</p>
 </blockquote>
 <h2 id="4-FFC-flex-formatting-context"><a href="#4-FFC-flex-formatting-context" class="headerlink" title="4. FFC (flex formatting context)"></a><strong>4. FFC (flex formatting context)</strong></h2><blockquote>
