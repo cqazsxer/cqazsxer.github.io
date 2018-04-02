@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="(　ﾟ∀ﾟ) ﾉ♡">
+    <title>Mongoose API - (　ﾟ∀ﾟ) ﾉ♡</title>
+    <meta name="author" content="Feng">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Feng","sameAs":[]},"articleBody":"Mongoose API标签（空格分隔）： mongodb \n\n快速入门入门首先确认你安装了 MongoDB 和 Node.js。然后用 npm 从命令行安装 mongoose：1$ npm install mongoose\n现在说我们喜欢毛茸茸的小猫，希望在 MongoDB 中记录每一个遇到的小猫。第一件需要做的就是在项目中引用 mongoose，然后在本地的 MongoDB 的实例中的test数据库打开一个连接。123// getting-started.jsvar mongoose = require('mongoose');mongoose.connect('mongodb://localhost/test');\n我们有了一个运行在本地、连接被挂起的test服务器。现在我们可以得知服务器是否连接成功或者报错：12345var db = mongoose.connection;db.on('error', console.error.bind(console, 'connection error:'));db.once('open', function (callback) &#123;  // yay!&#125;);\n\n一旦打开连接，callback将会被触发。为简洁起见，我们假设接下来的代码都不带有此callback。\n在 Mongoose 中, 一切源于 Schema。下面让我们来引用他并定义一个kittens:123var kittySchema = mongoose.Schema(&#123;    name: String&#125;)\n我们得到了有一个字段的 Schema ,类型为 String , 字段名为  name。下面由该 Schema 发布一个 model 。1var Kitten = mongoose.model('Kitten', kittySchema)\nmodel 是一个用来创建document的 类。这样的话，每个document将会是一个具有抽象属性和行为的数据库操作的 Kitten 对象。下面创建一个Kitten的 document 实例来标识刚刚散步遇到的小猫吧：12var silence = new Kitten(&#123; name: 'Silence' &#125;)console.log(silence.name) // 'Silence'\n小猫可以喵喵叫，下面展示了如何为 document 添加 speak方法。12345678// NOTE: methods must be added to the Schema before compiling it with mongoose.model()kittySchema.methods.speak = function () &#123;  var greeting = this.name    ? \"Meow name is \" + this.name    : \"I don't have a name\"  console.log(greeting);&#125;var Kitten = mongoose.model('Kitten', kittySchema)\n添加到 Schema 的 method属性中的方法，将被编译到到 model 原型中去并暴露在 document 实例：12var fluffy = new Kitten(&#123; name: 'fluffy' &#125;);fluffy.speak() // \"Meow name is fluffy\"\n现在有了可以喵喵叫的小猫！但是我们尚未在 MongoDB 中储存任何数据。每个 document 实例可以调用 自身的save方法存入数据库。callback 的第一个参数是发生错误时的返回码：1234fluffy.save(function (err, fluffy) &#123;  if (err) return console.error(err);  fluffy.speak();&#125;);\n假设我们想要显示之前遇到的所有小猫，我们可以通过 Kitten找到所有的kitten documents：1234Kitten.find(function (err, kittens) &#123;  if (err) return console.error(err);  console.log(kittens)&#125;)\n刚才我们在命令行打印了数据库中所有的kitten。如果我们想要通过name查询kitten, Mongoose 支持 MongoDB 的富参数查询：1Kitten.find(&#123; name: /^Fluff/ &#125;, callback)\n查询 name 字段以”Fluff”开头的 doucment 实例，在    callback 中返回结果。\n###结束快速入门已结束。我们创建了一个 Schema，添加了一个 document 方法，用 Mongoose 在 MongoDB 中保存和查询 kitten。更多请查看 guide 和 api docs。\n\n导航Schemas请确保你已看过快速入门章节再阅读本章节。\n定义SchemaMongoose中一切由Schema导出。每个Schema映射到MongoDB中的集合，并以集合定义骨架文本。1234567891011121314var mongoose = require('mongoose');var Schema = mongoose.Schema;var blogSchema = new Schema(&#123;  title:  String,  author: String,  body:   String,  comments: [&#123; body: String, date: Date &#125;],  date: &#123; type: Date, default: Date.now &#125;,  hidden: Boolean,  meta: &#123;    votes: Number,    favs:  Number  &#125;&#125;);\n每个 blogSchema 中的键定义的属性将会是 SchemaType定义的一个类型。比如，title 属性将会被定义成String, date将会被定义成data。也可以支持复杂的嵌套结构（比如上面的 meta）。\n基本数据类型有：\n\nString\nNumber\nDate\nBuffer\nBoolean\nMixed\nObjectId\nArray\n\nSchemas 不仅定义文档结构和数据类型，也可以定义实例方法，静态方法，索引，被称为中间件的文档生命周期钩子等。 \n创建Model为了使用schema定义，需要将 blogSchema 转化成易于工作的 Model 。为此，使用 mongoose.model(modelName, schema)方法。12var Blog = mongoose.model('Blog', blogSchema);// ready to go!\n实例方法(Instance methods)Model的实例都是 document , document有其自建的实例方法。也可以自己定义文档实例方法。123456// define a schemavar animalSchema = new Schema(&#123; name: String, type: String &#125;);// assign a function to the \"methods\" object of our animalSchemaanimalSchema.methods.findSimilarTypes = function (cb) &#123;  return this.model('Animal').find(&#123; type: this.type &#125;, cb);&#125;\n现在所有的Animal实例都有findSimilarTypes方法：12345var Animal = mongoose.model('Animal', animalSchema);var dog = new Animal(&#123; type: 'dog' &#125;);dog.findSimilarTypes(function (err, dogs) &#123;  console.log(dogs); // woof&#125;);\n重写默认的实例文档方法可能导致不可预知的结果。\n静态方法(Statics)为 model 添加静态方法也同样简单：12345678// assign a function to the \"statics\" object of our animalSchemaanimalSchema.statics.findByName = function (name, cb) &#123;  this.find(&#123; name: new RegExp(name, 'i') &#125;, cb);&#125;var Animal = mongoose.model('Animal', animalSchema);Animal.findByName('fido', function (err, animals) &#123;  console.log(animals);&#125;);\n索引（Indexes）MongoDB支持二级索引,在path层或者schema层定义索引。当创建复合索引时，在schema层定义索引很有必要。123456var animalSchema = new Schema(&#123;  name: String,  type: String,  tags: &#123; type: [String], index: true &#125; // field level&#125;);animalSchema.index(&#123; name: 1, type: -1 &#125;); // schema level\n当应用启动时，Mongoose为每个schema中的索引自动调用 ensureIndex 。为更好的开发，推荐将这项行为禁用因为索引可能导致显著的性能影响。在schema中设置 autoIndex: false 即可。123animalSchema.set('autoIndex', false);// ornew Schema(&#123;..&#125;, &#123; autoIndex: false &#125;);\n虚拟属性（Virtuals）虚拟属性可以在实例文档中get、set，但不能写入数据库。getters有助于格式化、连接字段，settings有助于将一个字段去结构化成多个字段存储。12345678910111213// define a schemavar personSchema = new Schema(&#123;  name: &#123;    first: String,    last: String  &#125;&#125;);// compile our modelvar Person = mongoose.model('Person', personSchema);// create a documentvar bad = new Person(&#123;    name: &#123; first: 'Walter', last: 'White' &#125;&#125;);\n假如要输出 bad 的全名，可以手动如下操作：12console.log(bad.name.first + ' ' + bad.name.last); // Walter White\n也可以在personSchema定义一个 virtual property getter,这样就不用每次使用时做字符串拼接了。123personSchema.virtual('name.full').get(function () &#123;  return this.name.first + ' ' + this.name.last;&#125;);\n此时，当使用 name.full 属性时，将会调用getter返回结果。12console.log('%s is insane', bad.name.full); // Walter White is insane\n注意如果结果集被转化成object或者JSON,virtuals默认不被启用，在 toObject()、toJSON()中传入 virtuals : true 以启用。\n也可以通过设置 this.name.full 来设置 this.name.first 和 this.name.last。比如，要分别设置 bad.name.first和 bad.name.last 为&quot;Breaking&quot; and &quot;Bad&quot; , 可做如下操作：也可以在personSchema定义 virtual property setters：1234567891011bad.name.full = 'Breaking Bad';```javascriptpersonSchema.virtual('name.full').set(function (name) &#123;  var split = name.split(' ');  this.name.first = split[0];## 标题 ##  this.name.last = split[1];&#125;);...mad.name.full = 'Breaking Bad';console.log(mad.name.first); // Breakingconsole.log(mad.name.last);  // Bad\n虚拟属性setters在数据验证之前应用，所以上面的例子在 first、 last name字段即使是必须的也能正常使用。\n只有非虚拟属性可以作为查询和字段选择。\n可配置项（Options）schema有一系列的可被直接传入构造器或设置的可配置选项。1234new Schema(&#123;..&#125;, options);// orvar schema = new Schema(&#123;..&#125;);schema.set(option, value);\n有效选项:\n\nautoIndex\ncapped\ncollection\nid\n_id\nread\nsafe\nshardKey\nstrict\ntoJSON\ntoObject\nversionKey\n\noption: autoIndex当应用启动时，Mongoose给每个在schema定义索引发送一个 ensureIndex 命令。从mongoose V3开始，索引在 background 默认被创建。如果你希望禁用这项自动创建的特性并想在索引被创建时手动处理，将 Schemas autoIndex option设置为false然后在 model 中使用 ensureIndex。123var schema = new Schema(&#123;..&#125;, &#123; autoIndex: false &#125;);var Clock = mongoose.model('Clock', schema);Clock.ensureIndexes(callback);\noption: bufferCommands当应用运行时 autoReconnect被禁用并连接到一个单个mongo实例， 此时若连接中断，mongoose buffers 将一直发送commands 直到你手动恢复。在如上情况下禁用 mongoose buffer，将其设置为false。1var schema = new Schema(&#123;..&#125;, &#123; bufferCommands: false &#125;);\noption:cappedmongoose支持有上限集合。为了指定这种有上限的潜在的集合,以bytwa为单位设置最大上限。1new Schema(&#123;..&#125;, &#123; capped: 1024 &#125;);\n如果需要传入额外的参数如 max, autoIndexId, 上限参数也可以被设置为对象,这种情况下, size 参数是必选的。1new Schema(&#123;..&#125;, &#123; capped: &#123; size: 1024, max: 1000, autoIndexId: true &#125; &#125;);\noption: collectionMongoose默认将model name传入 utils.toCollectionName 以初始化集合。此方法将使model name变为复数。如需要非默认名称可以进行单独设置。1var dataSchema = new Schema(&#123;..&#125;, &#123; collection: 'data' &#125;);\noption: idMongoose默认地给每个schemas分配一个返回string类型或 ObjectId 形式 的virtual getter id，返回 _id 字段。如果不需要在schema中加入id getter，可以在schema创建时禁用。12345678910// default behaviorvar schema = new Schema(&#123; name: String &#125;);var Page = mongoose.model('Page', schema);var p = new Page(&#123; name: 'mongodb.org' &#125;);console.log(p.id); // '50341373e894ad16347efe01'// disabled idvar schema = new Schema(&#123; name: String &#125;, &#123; id: false &#125;);var Page = mongoose.model('Page', schema);var p = new Page(&#123; name: 'mongodb.org' &#125;);console.log(p.id); // undefined\noption: _id若Schema构造时没有初始化，Mongoose将默认地给每个schema分配一个_id字段， 类型为ObjectId类型，与mongoDB默认行为一致。如果不需要在schema中加入id getter，可以在schema初始化时禁用。请在schema创建时传入该option以阻止Mongoose创建_id。123456789101112131415161718192021// default behaviorvar schema = new Schema(&#123; name: String &#125;);var Page = mongoose.model('Page', schema);var p = new Page(&#123; name: 'mongodb.org' &#125;);console.log(p); // &#123; _id: '50341373e894ad16347efe01', name: 'mongodb.org' &#125;// disabled _idvar schema = new Schema(&#123; name: String &#125;, &#123; _id: false &#125;);// Don't set _id to false after schema construction as in// var schema = new Schema(&#123; name: String &#125;);// schema.set('_id', false);var Page = mongoose.model('Page', schema);var p = new Page(&#123; name: 'mongodb.org' &#125;);console.log(p); // &#123; name: 'mongodb.org' &#125;// MongoDB will create the _id when insertedp.save(function (err) &#123;  if (err) return handleError(err);  Page.findById(p, function (err, doc) &#123;    if (err) return handleError(err);    console.log(doc); // &#123; name: 'mongodb.org', _id: '50341373e894ad16347efe12' &#125;  &#125;)&#125;)\noption: read这个看不懂\noption: safe若有错误返回callback,此参数将会被传入。12var safe = &#123; w: \"majority\", wtimeout: 10000 &#125;;new Schema(&#123; .. &#125;, &#123; safe: safe &#125;);\nsafe字段默认被设置为true,以保证任何产生的错误都能返回到callback。safe 可如下设置 { j: 1, w: 2, wtimeout: 10000 } ,设置j表示做1份日志，w表示做2个副本（尚不明确），超时时间10秒。12var safe = &#123; w: \"majority\", wtimeout: 10000 &#125;;new Schema(&#123; .. &#125;, &#123; safe: safe &#125;);\noption: shardKey需要mongoose做分布式处理才会用到该属性。每个分布的集合分配一个必须在insert/update操作时传输的分布秘钥。只需设置schema option为同一个分布秘钥即可。1new Schema(&#123; .. &#125;, &#123; shardKey: &#123; tag: 1, name: 1 &#125;&#125;)\noption: strict默认开启strict option,用于保证传入model构造器中不准确的值不会被写入数据库。12345678var thingSchema = new Schema(&#123;..&#125;)var Thing = mongoose.model('Thing', thingSchema);var thing = new Thing(&#123; iAmNotInTheSchema: true &#125;);thing.save(); // iAmNotInTheSchema is not saved to the db// set to false..var thingSchema = new Schema(&#123;..&#125;, &#123; strict: false &#125;);var thing = new Thing(&#123; iAmNotInTheSchema: true &#125;);thing.save(); // iAmNotInTheSchema is now saved to the db!!\n这同样影响 doc.set() 方法。12345var thingSchema = new Schema(&#123;..&#125;)var Thing = mongoose.model('Thing', thingSchema);var thing = new Thing;thing.set('iAmNotInTheSchema', true);thing.save(); // iAmNotInTheSchema is not saved to the db\n该参数可设置boolean值在model实例层重写。123var Thing = mongoose.model('Thing');var thing = new Thing(doc, true);  // enables strict modevar thing = new Thing(doc, false); // disables strict mode\n该参数也可被设为&quot;throw&quot;,此时传入错误的数据将会报错。注意：不要设置为false,除非有适当的理由。注意：任何在实例中的设置的不存在于schema中的key/val将会被忽略，无视该参数。12345var thingSchema = new Schema(&#123;..&#125;)var Thing = mongoose.model('Thing', thingSchema);var thing = new Thing;thing.iAmNotInTheSchema = true;thing.save(); // iAmNotInTheSchema is never saved to the db\noption: toJSON和 toObjectoption 类似，但只在document.toString 被调用时起作用。1234567891011var schema = new Schema(&#123; name: String &#125;);schema.path('name').get(function (v) &#123;  return v + ' is my name';&#125;);schema.set('toJSON', &#123; getters: true, virtuals: false &#125;);var M = mongoose.model('Person', schema);var m = new M(&#123; name: 'Max Headroom' &#125;);console.log(m.toObject()); // &#123; _id: 504e0cd7dd992d9be2f20b6f, name: 'Max Headroom' &#125;console.log(m.toJSON()); // &#123; _id: 504e0cd7dd992d9be2f20b6f, name: 'Max Headroom is my name' &#125;// since we know toJSON is called whenever a js object is stringified:console.log(JSON.stringify(m)); // &#123; \"_id\": \"504e0cd7dd992d9be2f20b6f\", \"name\": \"Max Headroom is my name\" &#125;\noption: toObjectdocument.toObject 可以将mongoose document转化为JavaScript对象。该方法接受一系列参数。可以将参数定义在schema以默认地在schema产生的document中接受这些参数，而不是给每个document传入参数。设置 getters: true 以使 viturals 也能在 console.log 中输出。12345678var schema = new Schema(&#123; name: String &#125;);schema.path('name').get(function (v) &#123;  return v + ' is my name';&#125;);schema.set('toObject', &#123; getters: true &#125;);var M = mongoose.model('Person', schema);var m = new M(&#123; name: 'Max Headroom' &#125;);console.log(m); // &#123; _id: 504e0cd7dd992d9be2f20b6f, name: 'Max Headroom is my name' &#125;\noption: versionKey每个doucment被创建时会写入versionKey。此值包括该document内置的修订。该document属性的name是可配置的。默认的是 _v。如果与你的应用冲突了，你可以如下配置：123456789var schema = new Schema(&#123; name: 'string' &#125;);var Thing = mongoose.model('Thing', schema);var thing = new Thing(&#123; name: 'mongoose v3' &#125;);thing.save(); // &#123; __v: 0, name: 'mongoose v3' &#125;// customized versionKeynew Schema(&#123;..&#125;, &#123; versionKey: '_somethingElse' &#125;)var Thing = mongoose.model('Thing', schema);var thing = new Thing(&#123; name: 'mongoose v3' &#125;);thing.save(); // &#123; _somethingElse: 0, name: 'mongoose v3' &#125;\ndocument版本控制也可设置为 false 禁用,不要 禁用该option， 除非你知道你在做什么。\n\nModelsModels是由schema定义编译的假想的构造器，document表示Models的实例，可被存入数据库或从数据库恢复。所有数据库操作都是由model处理。\n编译model12var schema = new mongoose.Schema(&#123; name: 'string', size: 'string' &#125;);var Tank = mongoose.model('Tank', schema);\n生成documentdocument是model的实例。创建doc并存入数据库是简单的：1234567891011var Tank = mongoose.model('Tank', yourSchema);var small = new Tank(&#123; size: 'small' &#125;);small.save(function (err) &#123;  if (err) return handleError(err);  // saved!&#125;)// orTank.create(&#123; size: 'small' &#125;, function (err, small) &#123;  if (err) return handleError(err);  // saved!&#125;)\n注意未打开连接的话任何tanks将不会被创建/删除。这种情况下，使用 mongoose.model() ,现在打开连接：1mongoose.connect('localhost', 'gettingstarted');\n查询用Mongoose查询很简单，mongoose支持MongoDB的富参数查询。可以使用models静态方法 find , findById , findOne , or  where 。1Tank.find(&#123; size: 'small' &#125;).where('createdDate').gt(oneYearAgo).exec(callback);\n删除model.remove 静态方法可删除满足contitions的所有文档。1234Tank.remove(&#123; size: 'large' &#125;, function (err) &#123;  if (err) return handleError(err);  // removed!&#125;);\n更新每个model有其自身的 update 方法用于在数据库中修改文档，无需将其返回你的应用。\n\nDocumentsMongoose documents是存储于MongoDB中的点对点映射。每个document都是model的一个实例。查询有很多方法可以从MongoDB检索文档。详情见querying章节。\n更新有很多种方式可以更新docments。下面是一种用 findById 的传统的方式：123456789Tank.findById(id, function (err, tank) &#123;  if (err) return handleError(err);    tank.size = 'large';  tank.save(function (err) &#123;    if (err) return handleError(err);    res.send(tank);  &#125;);&#125;);\n这个方法找到了mongo中第一条document，然后分配一个 save 命令。但是，如果我们不需要返回在应用中返回document，而是直接在数据库中直接更新属性。可以使用 model.uopdate() 。1Tank.update(&#123; _id: id &#125;, &#123; $set: &#123; size: 'large' &#125;&#125;, callback);\n如果需要返回document，可以使用：1234Tank.findByIdAndUpdate(id, &#123; $set: &#123; size: 'large' &#125;&#125;, function (err, tank) &#123;  if (err) return handleError(err);  res.send(tank);&#125;);\n验证文档在存储之前验证。findAndUpdate/Remove 静态方法对至少一个document进行操作，然后只调用一次返回结果。\n\nSub Docs嵌套文档是由已有schema创建的文档的集合。1234var childSchema = new Schema(&#123; name: 'string' &#125;);var parentSchema = new Schema(&#123;  children: [childSchema]&#125;)\n嵌套文档和普通文档有着相同的特性。唯一的不同是嵌套文档不是单独的被存储，而是父元素存储时才被存储。1234var Parent = mongoose.model('Parent', parentSchema);var parent = new Parent(&#123; children: [&#123; name: 'Matt' &#125;, &#123; name: 'Sarah' &#125;] &#125;)parent.children[0].name = 'Matthew';parent.save(callback);\n如果在嵌套文档的中间件发生了错误，它将会冒泡到父元素的callback,此时error handling 被中断了。12345678childSchema.pre('save', function (next) &#123;  if ('invalid' == this.name) return next(new Error('#sadpanda'));  next();&#125;);var parent = new Parent(&#123; children: [&#123; name: 'invalid' &#125;] &#125;);parent.save(function (err) &#123;  console.log(err.message) // #sadpanda&#125;)\n找到嵌套文档每个文档有一个 _id。文档集合有特殊的id方法用于查找他的 _id 。1var doc = parent.children.id(id);\n添加嵌套文档MongooseArray方法， push 、 unshift 、addToSet等显式地向合适的类型中注入参数。1234567891011var Parent = mongoose.model('Parent');var parent = new Parent;// create a commentparent.children.push(&#123; name: 'Liesl' &#125;);var subdoc = parent.children[0];console.log(subdoc) // &#123; _id: '501d86090d371bab2c0341c5', name: 'Liesl' &#125;subdoc.isNew; // trueparent.save(function (err) &#123;  if (err) return handleError(err)  console.log('Success!');&#125;);\n嵌套文档也可以通过MongooseArrays的 create 方法进行创建。删除嵌套文档每个嵌套文档有自身的 remove 方法。12345var doc = parent.children.id(id).remove();parent.save(function (err) &#123;  if (err) return handleError(err);  console.log('the sub-doc was removed')&#125;);\n\nQueries文档可被models的若干静态方法查询。任何带有准确查询条件的model方法有两种执行方式：当callback：\n\n被传入时，当结果返回callback时方法将会被立即执行。\n未传入时，会返回一个提供特殊接口 QueryBuilder 的 Query 实例。\n\n看看传入callback时发生了什么：123456var Person = mongoose.model('Person', yourSchema);// find each person with a last name matching 'Ghost', selecting the `name` and `occupation` fieldsPerson.findOne(&#123; 'name.last': 'Ghost' &#125;, 'name occupation', function (err, person) &#123;  if (err) return handleError(err);  console.log('%s %s is a %s.', person.name.first, person.name.last, person.occupation) // Space Ghost is a talk show host.&#125;)\n现在可知查询被立刻执行，然后结果返回callback。mongoose中的callback使用如下参数 callback(error, result)。如果查询时发生错误， error 参数将包含一个错误文档，result 将会是null。如果查询成功， error 将会是null,而 result 将会是查询的结果的填充。\n只要是在queryz中传入了callback, callback就遵循如下模式 callback(error, result)。  result取决于方法： findOne 是单个潜在的空文档， find() 是文档集合， count 是文档数量， update 是影响的文档数。\n看看未传入callback时发生了什么：123456789// find each person with a last name matching 'Ghost'var query = Person.findOne(&#123; 'name.last': 'Ghost' &#125;);// selecting the `name` and `occupation` fieldsquery.select('name occupation');// execute the query at a later timequery.exec(function (err, person) &#123;  if (err) return handleError(err);  console.log('%s %s is a %s.', person.name.first, person.name.last, person.occupation) // Space Ghost is a talk show host.&#125;)\n返回的 Query 允许进行链式查询。深入的例子：123456789Person.find(&#123; occupation: /host/ &#125;).where('name.last').equals('Ghost').where('age').gt(17).lt(66).where('likes').in(['vaporizing', 'talking']).limit(10).sort('-occupation').select('name occupation').exec(callback);\n","dateCreated":"2016-07-27T12:28:00+08:00","dateModified":"2018-03-23T11:11:49+08:00","datePublished":"2016-07-27T12:28:00+08:00","description":"Mongoose API标签（空格分隔）： mongodb \n\n快速入门入门首先确认你安装了 MongoDB 和 Node.js。然后用 npm 从命令行安装 mongoose：1$ npm install mongoose\n现在说我们喜欢毛茸茸的小猫，希望在 MongoDB 中记录每一个遇到的小猫。第一件需要做的就是在项目中引用 mongoose，然后在本地的 MongoDB 的实例中的test数据库打开一个连接。123// getting-started.jsvar mongoose = require('mongoose');mongoose.connect('mongodb://localhost/test');\n我们有了一个运行在本地、连接被挂起的test服务器。现在我们可以得知服务器是否连接成功或者报错：12345var db = mongoose.connection;db.on('error', console.error.bind(console, 'connection error:'));db.once('open', function (callback) &#123;  // yay!&#125;);","headline":"Mongoose API","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2016/07/27/Mongoose API/"},"publisher":{"@type":"Organization","name":"Feng","sameAs":[]},"url":"http://yoursite.com/2016/07/27/Mongoose API/"}</script>
+    <meta name="description" content="Mongoose API标签（空格分隔）： mongodb   快速入门入门首先确认你安装了 MongoDB 和 Node.js。然后用 npm 从命令行安装 mongoose：1$ npm install mongoose 现在说我们喜欢毛茸茸的小猫，希望在 MongoDB 中记录每一个遇到的小猫。第一件需要做的就是在项目中引用 mongoose，然后在本地的 MongoDB 的实例中的test">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="Mongoose API">
+<meta property="og:url" content="http://yoursite.com/2016/07/27/Mongoose API/index.html">
+<meta property="og:site_name" content="(　ﾟ∀ﾟ) ﾉ♡">
+<meta property="og:description" content="Mongoose API标签（空格分隔）： mongodb   快速入门入门首先确认你安装了 MongoDB 和 Node.js。然后用 npm 从命令行安装 mongoose：1$ npm install mongoose 现在说我们喜欢毛茸茸的小猫，希望在 MongoDB 中记录每一个遇到的小猫。第一件需要做的就是在项目中引用 mongoose，然后在本地的 MongoDB 的实例中的test">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-03-23T03:11:49.284Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mongoose API">
+<meta name="twitter:description" content="Mongoose API标签（空格分隔）： mongodb   快速入门入门首先确认你安装了 MongoDB 和 Node.js。然后用 npm 从命令行安装 mongoose：1$ npm install mongoose 现在说我们喜欢毛茸茸的小猫，希望在 MongoDB 中记录每一个遇到的小猫。第一件需要做的就是在项目中引用 mongoose，然后在本地的 MongoDB 的实例中的test">
+    
+    
+        
+    
+    
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/font-awesome.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">(　ﾟ∀ﾟ) ﾉ♡</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Kategorien"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Kategorien</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archiv"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archiv</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Suche"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Suche</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="Über"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Über</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            Mongoose API
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2016-07-27T12:28:00+08:00">
+	
+		    27 7月 2016
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h1 id="Mongoose-API"><a href="#Mongoose-API" class="headerlink" title="Mongoose API"></a><strong>Mongoose API</strong></h1><p>标签（空格分隔）： mongodb </p>
+<hr>
+<h2 id="快速入门"><a href="#快速入门" class="headerlink" title="快速入门"></a>快速入门</h2><h3 id="入门"><a href="#入门" class="headerlink" title="入门"></a>入门</h3><p><em>首先确认你安装了 <code>MongoDB</code> 和 <code>Node.js</code></em>。<br>然后用 <code>npm</code> 从命令行安装 <code>mongoose</code>：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ npm install mongoose</span><br></pre></td></tr></table></figure></p>
+<p>现在说我们喜欢毛茸茸的小猫，希望在 <code>MongoDB</code> 中记录每一个遇到的小猫。第一件需要做的就是在项目中引用 <code>mongoose</code>，然后在本地的 <code>MongoDB</code> 的实例中的test数据库打开一个连接。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// getting-started.js</span></span><br><span class="line"><span class="keyword">var</span> mongoose = <span class="built_in">require</span>(<span class="string">'mongoose'</span>);</span><br><span class="line">mongoose.connect(<span class="string">'mongodb://localhost/test'</span>);</span><br></pre></td></tr></table></figure></p>
+<p>我们有了一个运行在本地、连接被挂起的test服务器。现在我们可以得知服务器是否连接成功或者报错：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> db = mongoose.connection;</span><br><span class="line">db.on(<span class="string">'error'</span>, <span class="built_in">console</span>.error.bind(<span class="built_in">console</span>, <span class="string">'connection error:'</span>));</span><br><span class="line">db.once(<span class="string">'open'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">callback</span>) </span>&#123;</span><br><span class="line">  <span class="comment">// yay!</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<a id="more"></a>
+<p>一旦打开连接，callback将会被触发。为简洁起见，我们假设接下来的代码都不带有此callback。</p>
+<p>在 Mongoose 中, 一切源于 <strong><code>Schema</code></strong>。下面让我们来引用他并定义一个kittens:<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> kittySchema = mongoose.Schema(&#123;</span><br><span class="line">    name: <span class="built_in">String</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>我们得到了有一个字段的 <code>Schema</code> ,类型为 String , 字段名为  name。下面由该 <code>Schema</code> 发布一个 <code>model</code> 。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Kitten = mongoose.model(<span class="string">'Kitten'</span>, kittySchema)</span><br></pre></td></tr></table></figure></p>
+<p><code>model</code> 是一个用来创建<code>document</code>的 类。这样的话，每个<code>document</code>将会是一个具有抽象属性和行为的数据库操作的 <code>Kitten</code> 对象。下面创建一个<code>Kitten</code>的 <code>document</code> 实例来标识刚刚散步遇到的小猫吧：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> silence = <span class="keyword">new</span> Kitten(&#123; <span class="attr">name</span>: <span class="string">'Silence'</span> &#125;)</span><br><span class="line"><span class="built_in">console</span>.log(silence.name) <span class="comment">// 'Silence'</span></span><br></pre></td></tr></table></figure></p>
+<p>小猫可以喵喵叫，下面展示了如何为 <code>document</code> 添加 <code>speak</code>方法。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// <span class="doctag">NOTE:</span> methods must be added to the Schema before compiling it with mongoose.model()</span></span><br><span class="line">kittySchema.methods.speak = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">var</span> greeting = <span class="keyword">this</span>.name</span><br><span class="line">    ? <span class="string">"Meow name is "</span> + <span class="keyword">this</span>.name</span><br><span class="line">    : <span class="string">"I don't have a name"</span></span><br><span class="line">  <span class="built_in">console</span>.log(greeting);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> Kitten = mongoose.model(<span class="string">'Kitten'</span>, kittySchema)</span><br></pre></td></tr></table></figure></p>
+<p>添加到 <code>Schema</code> 的 <code>method</code>属性中的方法，将被编译到到 <code>model</code> 原型中去并暴露在 <code>document</code> 实例：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> fluffy = <span class="keyword">new</span> Kitten(&#123; <span class="attr">name</span>: <span class="string">'fluffy'</span> &#125;);</span><br><span class="line">fluffy.speak() <span class="comment">// "Meow name is fluffy"</span></span><br></pre></td></tr></table></figure></p>
+<p>现在有了可以喵喵叫的小猫！但是我们尚未在 MongoDB 中储存任何数据。每个 <code>document</code> 实例可以调用 自身的<strong><code>save</code></strong>方法存入数据库。<code>callback</code> 的第一个参数是发生错误时的返回码：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">fluffy.save(<span class="function"><span class="keyword">function</span> (<span class="params">err, fluffy</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> <span class="built_in">console</span>.error(err);</span><br><span class="line">  fluffy.speak();</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>假设我们想要显示之前遇到的所有小猫，我们可以通过 <code>Kitten</code>找到所有的kitten <code>documents</code>：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Kitten.find(<span class="function"><span class="keyword">function</span> (<span class="params">err, kittens</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> <span class="built_in">console</span>.error(err);</span><br><span class="line">  <span class="built_in">console</span>.log(kittens)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>刚才我们在命令行打印了数据库中所有的kitten。如果我们想要通过name查询kitten, Mongoose 支持 MongoDB 的<em>富参数查询</em>：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Kitten.find(&#123; <span class="attr">name</span>: <span class="regexp">/^Fluff/</span> &#125;, callback)</span><br></pre></td></tr></table></figure></p>
+<p>查询 <code>name</code> 字段以”Fluff”开头的 <code>doucment</code> 实例，在    <code>callback</code> 中返回结果。</p>
+<p>###结束<br>快速入门已结束。我们创建了一个 <code>Schema</code>，添加了一个 <code>document</code> 方法，用 Mongoose 在 MongoDB 中保存和查询 kitten。更多请查看 guide 和 api docs。</p>
+<hr>
+<h2 id="导航"><a href="#导航" class="headerlink" title="导航"></a><strong>导航</strong></h2><h3 id="Schemas"><a href="#Schemas" class="headerlink" title="Schemas"></a><strong>Schemas</strong></h3><p>请确保你已看过快速入门章节再阅读本章节。</p>
+<h4 id="定义Schema"><a href="#定义Schema" class="headerlink" title="定义Schema"></a><strong>定义Schema</strong></h4><p>Mongoose中一切由Schema导出。每个Schema映射到MongoDB中的集合，并以集合定义骨架文本。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> mongoose = <span class="built_in">require</span>(<span class="string">'mongoose'</span>);</span><br><span class="line"><span class="keyword">var</span> Schema = mongoose.Schema;</span><br><span class="line"><span class="keyword">var</span> blogSchema = <span class="keyword">new</span> Schema(&#123;</span><br><span class="line">  title:  <span class="built_in">String</span>,</span><br><span class="line">  author: <span class="built_in">String</span>,</span><br><span class="line">  body:   <span class="built_in">String</span>,</span><br><span class="line">  comments: [&#123; <span class="attr">body</span>: <span class="built_in">String</span>, <span class="attr">date</span>: <span class="built_in">Date</span> &#125;],</span><br><span class="line">  date: &#123; <span class="attr">type</span>: <span class="built_in">Date</span>, <span class="attr">default</span>: <span class="built_in">Date</span>.now &#125;,</span><br><span class="line">  hidden: <span class="built_in">Boolean</span>,</span><br><span class="line">  meta: &#123;</span><br><span class="line">    votes: <span class="built_in">Number</span>,</span><br><span class="line">    favs:  <span class="built_in">Number</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>每个 <code>blogSchema</code> 中的键定义的属性将会是 <code>SchemaType</code>定义的一个类型。比如，<code>title</code> 属性将会被定义成String, <code>date</code>将会被定义成data。也可以支持复杂的嵌套结构（比如上面的 <code>meta</code>）。</p>
+<p>基本数据类型有：</p>
+<ul>
+<li>String</li>
+<li>Number</li>
+<li>Date</li>
+<li>Buffer</li>
+<li>Boolean</li>
+<li>Mixed</li>
+<li>ObjectId</li>
+<li>Array</li>
+</ul>
+<p><code>Schemas</code> 不仅定义文档结构和数据类型，也可以定义实例方法，静态方法，索引，被称为中间件的文档生命周期钩子等。 </p>
+<h4 id="创建Model"><a href="#创建Model" class="headerlink" title="创建Model"></a><strong>创建Model</strong></h4><p>为了使用schema定义，需要将 <code>blogSchema</code> 转化成易于工作的 <code>Model</code> 。为此，使用 <code>mongoose.model(modelName, schema)</code>方法。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Blog = mongoose.model(<span class="string">'Blog'</span>, blogSchema);</span><br><span class="line"><span class="comment">// ready to go!</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="实例方法-Instance-methods"><a href="#实例方法-Instance-methods" class="headerlink" title="实例方法(Instance methods)"></a><strong>实例方法(Instance methods)</strong></h4><p><code>Model</code>的实例都是 <code>document</code> , <code>document</code>有其自建的实例方法。也可以自己定义文档实例方法。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// define a schema</span></span><br><span class="line"><span class="keyword">var</span> animalSchema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span>, <span class="attr">type</span>: <span class="built_in">String</span> &#125;);</span><br><span class="line"><span class="comment">// assign a function to the "methods" object of our animalSchema</span></span><br><span class="line">animalSchema.methods.findSimilarTypes = <span class="function"><span class="keyword">function</span> (<span class="params">cb</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.model(<span class="string">'Animal'</span>).find(&#123; <span class="attr">type</span>: <span class="keyword">this</span>.type &#125;, cb);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>现在所有的Animal实例<em>都</em>有findSimilarTypes方法：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Animal = mongoose.model(<span class="string">'Animal'</span>, animalSchema);</span><br><span class="line"><span class="keyword">var</span> dog = <span class="keyword">new</span> Animal(&#123; <span class="attr">type</span>: <span class="string">'dog'</span> &#125;);</span><br><span class="line">dog.findSimilarTypes(<span class="function"><span class="keyword">function</span> (<span class="params">err, dogs</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(dogs); <span class="comment">// woof</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>重写默认的实例文档方法可能导致<em>不可预知</em>的结果。</p>
+<h4 id="静态方法-Statics"><a href="#静态方法-Statics" class="headerlink" title="静态方法(Statics)"></a><strong>静态方法(Statics)</strong></h4><p>为 <code>model</code> 添加静态方法也同样简单：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// assign a function to the "statics" object of our animalSchema</span></span><br><span class="line">animalSchema.statics.findByName = <span class="function"><span class="keyword">function</span> (<span class="params">name, cb</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>.find(&#123; <span class="attr">name</span>: <span class="keyword">new</span> <span class="built_in">RegExp</span>(name, <span class="string">'i'</span>) &#125;, cb);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">var</span> Animal = mongoose.model(<span class="string">'Animal'</span>, animalSchema);</span><br><span class="line">Animal.findByName(<span class="string">'fido'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err, animals</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(animals);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<h4 id="索引（Indexes）"><a href="#索引（Indexes）" class="headerlink" title="索引（Indexes）"></a><strong>索引（Indexes）</strong></h4><p>MongoDB支持<em>二级索引</em>,在path层或者schema层定义索引。当创建复合索引时，在schema层定义索引很有必要。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> animalSchema = <span class="keyword">new</span> Schema(&#123;</span><br><span class="line">  name: <span class="built_in">String</span>,</span><br><span class="line">  type: <span class="built_in">String</span>,</span><br><span class="line">  tags: &#123; <span class="attr">type</span>: [<span class="built_in">String</span>], <span class="attr">index</span>: <span class="literal">true</span> &#125; <span class="comment">// field level</span></span><br><span class="line">&#125;);</span><br><span class="line">animalSchema.index(&#123; <span class="attr">name</span>: <span class="number">1</span>, <span class="attr">type</span>: <span class="number">-1</span> &#125;); <span class="comment">// schema level</span></span><br></pre></td></tr></table></figure></p>
+<p>当应用启动时，Mongoose为每个schema中的索引自动调用 <code>ensureIndex</code> 。为更好的开发，推荐将这项行为禁用因为索引可能导致显著的性能影响。在schema中设置 <code>autoIndex: false</code> 即可。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">animalSchema.set(<span class="string">'autoIndex'</span>, <span class="literal">false</span>);</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">autoIndex</span>: <span class="literal">false</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<h4 id="虚拟属性（Virtuals）"><a href="#虚拟属性（Virtuals）" class="headerlink" title="虚拟属性（Virtuals）"></a><strong>虚拟属性（Virtuals）</strong></h4><p>虚拟属性可以在实例文档中get、set，但不能写入数据库。getters有助于格式化、连接字段，settings有助于将一个字段去结构化成多个字段存储。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// define a schema</span></span><br><span class="line"><span class="keyword">var</span> personSchema = <span class="keyword">new</span> Schema(&#123;</span><br><span class="line">  name: &#123;</span><br><span class="line">    first: <span class="built_in">String</span>,</span><br><span class="line">    last: <span class="built_in">String</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br><span class="line"><span class="comment">// compile our model</span></span><br><span class="line"><span class="keyword">var</span> Person = mongoose.model(<span class="string">'Person'</span>, personSchema);</span><br><span class="line"><span class="comment">// create a document</span></span><br><span class="line"><span class="keyword">var</span> bad = <span class="keyword">new</span> Person(&#123;</span><br><span class="line">    name: &#123; <span class="attr">first</span>: <span class="string">'Walter'</span>, <span class="attr">last</span>: <span class="string">'White'</span> &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>假如要输出 <code>bad</code> 的全名，可以手动如下操作：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(bad.name.first + <span class="string">' '</span> + bad.name.last); </span><br><span class="line"><span class="comment">// Walter White</span></span><br></pre></td></tr></table></figure></p>
+<p>也可以在personSchema定义一个 <code>virtual property getter</code>,这样就不用每次使用时做字符串拼接了。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">personSchema.virtual(<span class="string">'name.full'</span>).get(<span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">this</span>.name.first + <span class="string">' '</span> + <span class="keyword">this</span>.name.last;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>此时，当使用 <code>name.full</code> 属性时，将会调用getter返回结果。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">console</span>.log(<span class="string">'%s is insane'</span>, bad.name.full); </span><br><span class="line"><span class="comment">// Walter White is insane</span></span><br></pre></td></tr></table></figure></p>
+<p>注意如果结果集被转化成object或者JSON,virtuals默认<strong>不</strong>被启用，在 <code>toObject()</code>、<code>toJSON()</code>中传入 <code>virtuals : true</code> 以启用。</p>
+<p>也可以通过设置 <code>this.name.full</code> 来设置 <code>this.name.first</code> 和 <code>this.name.last</code>。比如，要分别设置 <code>bad.name.first</code>和 <code>bad.name.last</code> 为<code>&quot;Breaking&quot;</code> and <code>&quot;Bad&quot;</code> , 可做如下操作：<br>也可以在personSchema定义 <code>virtual property setters</code>：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">bad.name.full = <span class="string">'Breaking Bad'</span>;</span><br><span class="line"><span class="string">``</span><span class="string">`javascript</span></span><br><span class="line"><span class="string">personSchema.virtual('name.full').set(function (name) &#123;</span></span><br><span class="line"><span class="string">  var split = name.split(' ');</span></span><br><span class="line"><span class="string">  this.name.first = split[0];## 标题 ##</span></span><br><span class="line"><span class="string">  this.name.last = split[1];</span></span><br><span class="line"><span class="string">&#125;);</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="string">mad.name.full = 'Breaking Bad';</span></span><br><span class="line"><span class="string">console.log(mad.name.first); // Breaking</span></span><br><span class="line"><span class="string">console.log(mad.name.last);  // Bad</span></span><br></pre></td></tr></table></figure></p>
+<p>虚拟属性setters在数据验证之前应用，所以上面的例子在 <code>first</code>、 <code>last</code> name字段即使是必须的也能正常使用。</p>
+<p>只有非虚拟属性可以作为查询和字段选择。</p>
+<h4 id="可配置项（Options）"><a href="#可配置项（Options）" class="headerlink" title="可配置项（Options）"></a><strong>可配置项（Options）</strong></h4><p>schema有一系列的可被直接传入构造器或设置的可配置选项。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">new Schema(&#123;..&#125;, options);</span><br><span class="line">// or</span><br><span class="line">var schema = new Schema(&#123;..&#125;);</span><br><span class="line">schema.set(option, value);</span><br></pre></td></tr></table></figure></p>
+<p>有效选项:</p>
+<ul>
+<li>autoIndex</li>
+<li>capped</li>
+<li>collection</li>
+<li>id</li>
+<li>_id</li>
+<li>read</li>
+<li>safe</li>
+<li>shardKey</li>
+<li>strict</li>
+<li>toJSON</li>
+<li>toObject</li>
+<li>versionKey</li>
+</ul>
+<p><strong>option: autoIndex</strong><br>当应用启动时，Mongoose给每个在schema定义索引发送一个 <code>ensureIndex</code> 命令。从mongoose V3开始，索引在 <code>background</code> 默认被创建。如果你希望禁用这项自动创建的特性并想在索引被创建时手动处理，将 <code>Schemas autoIndex</code> option设置为false然后在 <code>model</code> 中使用 <code>ensureIndex</code>。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">autoIndex</span>: <span class="literal">false</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> Clock = mongoose.model(<span class="string">'Clock'</span>, schema);</span><br><span class="line">Clock.ensureIndexes(callback);</span><br></pre></td></tr></table></figure></p>
+<p><strong>option: bufferCommands</strong><br>当应用运行时 <code>autoReconnect</code>被禁用并连接到一个单个mongo实例， 此时若连接中断，<code>mongoose buffers</code> 将一直发送commands 直到你手动恢复。在如上情况下禁用 <code>mongoose buffer</code>，将其设置为false。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">bufferCommands</span>: <span class="literal">false</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<p><strong>option:capped</strong><br>mongoose支持有上限集合。为了指定这种有上限的潜在的集合,以bytwa为单位设置最大上限。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">capped</span>: <span class="number">1024</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<p>如果需要传入额外的参数如 <code>max</code>, <code>autoIndexId</code>, 上限参数也可以被设置为对象,这种情况下, <code>size</code> 参数是必选的。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">capped</span>: &#123; <span class="attr">size</span>: <span class="number">1024</span>, <span class="attr">max</span>: <span class="number">1000</span>, <span class="attr">autoIndexId</span>: <span class="literal">true</span> &#125; &#125;);</span><br></pre></td></tr></table></figure></p>
+<p><strong>option: collection</strong><br>Mongoose默认将model name传入 <code>utils.toCollectionName</code> 以初始化集合。此方法将使model name变为复数。如需要非默认名称可以进行单独设置。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> dataSchema = <span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">collection</span>: <span class="string">'data'</span> &#125;);</span><br></pre></td></tr></table></figure></p>
+<p><strong>option: id</strong><br>Mongoose默认地给每个schemas分配一个返回string类型或 <code>ObjectId</code> 形式 的<code>virtual getter</code> id，返回 <code>_id</code> 字段。如果不需要在schema中加入id getter，可以在schema创建时禁用。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// default behavior</span></span><br><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> Page = mongoose.model(<span class="string">'Page'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> p = <span class="keyword">new</span> Page(&#123; <span class="attr">name</span>: <span class="string">'mongodb.org'</span> &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(p.id); <span class="comment">// '50341373e894ad16347efe01'</span></span><br><span class="line"><span class="comment">// disabled id</span></span><br><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span> &#125;, &#123; <span class="attr">id</span>: <span class="literal">false</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> Page = mongoose.model(<span class="string">'Page'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> p = <span class="keyword">new</span> Page(&#123; <span class="attr">name</span>: <span class="string">'mongodb.org'</span> &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(p.id); <span class="comment">// undefined</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>option: _id</strong><br>若Schema构造时没有初始化，Mongoose将默认地给每个schema分配一个<code>_id</code>字段， 类型为<code>ObjectId</code>类型，与mongoDB默认行为一致。如果不需要在schema中加入id getter，可以在schema初始化时禁用。<br>请在schema创建时传入该option以阻止Mongoose创建<code>_id</code>。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// default behavior</span></span><br><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> Page = mongoose.model(<span class="string">'Page'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> p = <span class="keyword">new</span> Page(&#123; <span class="attr">name</span>: <span class="string">'mongodb.org'</span> &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(p); <span class="comment">// &#123; _id: '50341373e894ad16347efe01', name: 'mongodb.org' &#125;</span></span><br><span class="line"><span class="comment">// disabled _id</span></span><br><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span> &#125;, &#123; <span class="attr">_id</span>: <span class="literal">false</span> &#125;);</span><br><span class="line"><span class="comment">// Don't set _id to false after schema construction as in</span></span><br><span class="line"><span class="comment">// var schema = new Schema(&#123; name: String &#125;);</span></span><br><span class="line"><span class="comment">// schema.set('_id', false);</span></span><br><span class="line"><span class="keyword">var</span> Page = mongoose.model(<span class="string">'Page'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> p = <span class="keyword">new</span> Page(&#123; <span class="attr">name</span>: <span class="string">'mongodb.org'</span> &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(p); <span class="comment">// &#123; name: 'mongodb.org' &#125;</span></span><br><span class="line"><span class="comment">// MongoDB will create the _id when inserted</span></span><br><span class="line">p.save(<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  Page.findById(p, <span class="function"><span class="keyword">function</span> (<span class="params">err, doc</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">    <span class="built_in">console</span>.log(doc); <span class="comment">// &#123; name: 'mongodb.org', _id: '50341373e894ad16347efe12' &#125;</span></span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p><strong>option: read</strong><br><em>这个看不懂</em></p>
+<p><strong>option: safe</strong><br>若有错误返回callback,此参数将会被传入。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> safe = &#123; <span class="attr">w</span>: <span class="string">"majority"</span>, <span class="attr">wtimeout</span>: <span class="number">10000</span> &#125;;</span><br><span class="line"><span class="keyword">new</span> Schema(&#123; .. &#125;, &#123; <span class="attr">safe</span>: safe &#125;);</span><br></pre></td></tr></table></figure></p>
+<p><code>safe</code>字段默认被设置为true,以保证任何产生的错误都能返回到callback。<code>safe</code> 可如下设置 <code>{ j: 1, w: 2, wtimeout: 10000 }</code> ,设置j表示做1份日志，w表示做2个副本（尚不明确），超时时间10秒。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> safe = &#123; <span class="attr">w</span>: <span class="string">"majority"</span>, <span class="attr">wtimeout</span>: <span class="number">10000</span> &#125;;</span><br><span class="line"><span class="keyword">new</span> Schema(&#123; .. &#125;, &#123; <span class="attr">safe</span>: safe &#125;);</span><br></pre></td></tr></table></figure></p>
+<p><strong>option: shardKey</strong><br>需要mongoose做分布式处理才会用到该属性。每个分布的集合分配一个必须在insert/update操作时传输的分布秘钥。只需设置schema option为同一个分布秘钥即可。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">new</span> Schema(&#123; .. &#125;, &#123; <span class="attr">shardKey</span>: &#123; <span class="attr">tag</span>: <span class="number">1</span>, <span class="attr">name</span>: <span class="number">1</span> &#125;&#125;)</span><br></pre></td></tr></table></figure></p>
+<p><strong>option: strict</strong><br>默认开启strict option,用于保证传入model构造器中不准确的值不会被写入数据库。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> thingSchema = <span class="keyword">new</span> Schema(&#123;..&#125;)</span><br><span class="line"><span class="keyword">var</span> Thing = mongoose.model(<span class="string">'Thing'</span>, thingSchema);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing(&#123; <span class="attr">iAmNotInTheSchema</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">thing.save(); <span class="comment">// iAmNotInTheSchema is not saved to the db</span></span><br><span class="line"><span class="comment">// set to false..</span></span><br><span class="line"><span class="keyword">var</span> thingSchema = <span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">strict</span>: <span class="literal">false</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing(&#123; <span class="attr">iAmNotInTheSchema</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">thing.save(); <span class="comment">// iAmNotInTheSchema is now saved to the db!!</span></span><br></pre></td></tr></table></figure></p>
+<p>这同样影响 <code>doc.set()</code> 方法。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> thingSchema = <span class="keyword">new</span> Schema(&#123;..&#125;)</span><br><span class="line"><span class="keyword">var</span> Thing = mongoose.model(<span class="string">'Thing'</span>, thingSchema);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing;</span><br><span class="line">thing.set(<span class="string">'iAmNotInTheSchema'</span>, <span class="literal">true</span>);</span><br><span class="line">thing.save(); <span class="comment">// iAmNotInTheSchema is not saved to the db</span></span><br></pre></td></tr></table></figure></p>
+<p>该参数可设置boolean值在model实例层重写。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Thing = mongoose.model(<span class="string">'Thing'</span>);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing(doc, <span class="literal">true</span>);  <span class="comment">// enables strict mode</span></span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing(doc, <span class="literal">false</span>); <span class="comment">// disables strict mode</span></span><br></pre></td></tr></table></figure></p>
+<p>该参数也可被设为<code>&quot;throw&quot;</code>,此时传入错误的数据将会报错。<br><em>注意：<strong>不要</strong>设置为false,除非有适当的理由。</em><br><em>注意：任何在实例中的设置的不存在于schema中的key/val将会被忽略，无视该参数。</em><br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> thingSchema = <span class="keyword">new</span> Schema(&#123;..&#125;)</span><br><span class="line"><span class="keyword">var</span> Thing = mongoose.model(<span class="string">'Thing'</span>, thingSchema);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing;</span><br><span class="line">thing.iAmNotInTheSchema = <span class="literal">true</span>;</span><br><span class="line">thing.save(); <span class="comment">// iAmNotInTheSchema is never saved to the db</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>option: toJSON</strong><br>和 <code>toObject</code>option 类似，但只在document.toString 被调用时起作用。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span> &#125;);</span><br><span class="line">schema.path(<span class="string">'name'</span>).get(<span class="function"><span class="keyword">function</span> (<span class="params">v</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> v + <span class="string">' is my name'</span>;</span><br><span class="line">&#125;);</span><br><span class="line">schema.set(<span class="string">'toJSON'</span>, &#123; <span class="attr">getters</span>: <span class="literal">true</span>, <span class="attr">virtuals</span>: <span class="literal">false</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> M = mongoose.model(<span class="string">'Person'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> m = <span class="keyword">new</span> M(&#123; <span class="attr">name</span>: <span class="string">'Max Headroom'</span> &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(m.toObject()); <span class="comment">// &#123; _id: 504e0cd7dd992d9be2f20b6f, name: 'Max Headroom' &#125;</span></span><br><span class="line"><span class="built_in">console</span>.log(m.toJSON()); <span class="comment">// &#123; _id: 504e0cd7dd992d9be2f20b6f, name: 'Max Headroom is my name' &#125;</span></span><br><span class="line"><span class="comment">// since we know toJSON is called whenever a js object is stringified:</span></span><br><span class="line"><span class="built_in">console</span>.log(<span class="built_in">JSON</span>.stringify(m)); <span class="comment">// &#123; "_id": "504e0cd7dd992d9be2f20b6f", "name": "Max Headroom is my name" &#125;</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>option: toObject</strong><br><code>document.toObject</code> 可以将mongoose document转化为JavaScript对象。<br>该方法接受一系列参数。可以将参数定义在schema以默认地在schema产生的document中接受这些参数，而不是给每个document传入参数。<br>设置 <code>getters: true</code> 以使 <code>viturals</code> 也能在 <code>console.log</code> 中输出。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="built_in">String</span> &#125;);</span><br><span class="line">schema.path(<span class="string">'name'</span>).get(<span class="function"><span class="keyword">function</span> (<span class="params">v</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> v + <span class="string">' is my name'</span>;</span><br><span class="line">&#125;);</span><br><span class="line">schema.set(<span class="string">'toObject'</span>, &#123; <span class="attr">getters</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> M = mongoose.model(<span class="string">'Person'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> m = <span class="keyword">new</span> M(&#123; <span class="attr">name</span>: <span class="string">'Max Headroom'</span> &#125;);</span><br><span class="line"><span class="built_in">console</span>.log(m); <span class="comment">// &#123; _id: 504e0cd7dd992d9be2f20b6f, name: 'Max Headroom is my name' &#125;</span></span><br></pre></td></tr></table></figure></p>
+<p><strong>option: versionKey</strong><br>每个doucment被创建时会写入<code>versionKey</code>。此值包括该document内置的修订。该document属性的name是可配置的。默认的是 <code>_v</code>。如果与你的应用冲突了，你可以如下配置：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="string">'string'</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> Thing = mongoose.model(<span class="string">'Thing'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing(&#123; <span class="attr">name</span>: <span class="string">'mongoose v3'</span> &#125;);</span><br><span class="line">thing.save(); <span class="comment">// &#123; __v: 0, name: 'mongoose v3' &#125;</span></span><br><span class="line"><span class="comment">// customized versionKey</span></span><br><span class="line"><span class="keyword">new</span> Schema(&#123;..&#125;, &#123; <span class="attr">versionKey</span>: <span class="string">'_somethingElse'</span> &#125;)</span><br><span class="line"><span class="keyword">var</span> Thing = mongoose.model(<span class="string">'Thing'</span>, schema);</span><br><span class="line"><span class="keyword">var</span> thing = <span class="keyword">new</span> Thing(&#123; <span class="attr">name</span>: <span class="string">'mongoose v3'</span> &#125;);</span><br><span class="line">thing.save(); <span class="comment">// &#123; _somethingElse: 0, name: 'mongoose v3' &#125;</span></span><br></pre></td></tr></table></figure></p>
+<p>document版本控制也可设置为 <code>false</code> 禁用,<strong><em>不要</em></strong> 禁用该option， <em>除非你知道你在做什么</em>。</p>
+<hr>
+<h3 id="Models"><a href="#Models" class="headerlink" title="Models"></a><strong>Models</strong></h3><p>Models是由schema定义编译的假想的构造器，document表示Models的实例，可被存入数据库或从数据库恢复。所有数据库操作都是由model处理。</p>
+<h4 id="编译model"><a href="#编译model" class="headerlink" title="编译model"></a><strong>编译model</strong></h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> schema = <span class="keyword">new</span> mongoose.Schema(&#123; <span class="attr">name</span>: <span class="string">'string'</span>, <span class="attr">size</span>: <span class="string">'string'</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> Tank = mongoose.model(<span class="string">'Tank'</span>, schema);</span><br></pre></td></tr></table></figure>
+<h4 id="生成document"><a href="#生成document" class="headerlink" title="生成document"></a><strong>生成document</strong></h4><p>document是model的实例。创建doc并存入数据库是简单的：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Tank = mongoose.model(<span class="string">'Tank'</span>, yourSchema);</span><br><span class="line"><span class="keyword">var</span> small = <span class="keyword">new</span> Tank(&#123; <span class="attr">size</span>: <span class="string">'small'</span> &#125;);</span><br><span class="line">small.save(<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  <span class="comment">// saved!</span></span><br><span class="line">&#125;)</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line">Tank.create(&#123; <span class="attr">size</span>: <span class="string">'small'</span> &#125;, <span class="function"><span class="keyword">function</span> (<span class="params">err, small</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  <span class="comment">// saved!</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>注意未打开连接的话任何tanks将不会被创建/删除。这种情况下，使用 <code>mongoose.model()</code> ,现在打开连接：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mongoose.connect(<span class="string">'localhost'</span>, <span class="string">'gettingstarted'</span>);</span><br></pre></td></tr></table></figure></p>
+<p><strong>查询</strong><br>用Mongoose查询很简单，mongoose支持MongoDB的富参数查询。可以使用<code>models</code>静态方法 <code>find</code> , <code>findById</code> , <code>findOne</code> , or  <code>where</code> 。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Tank.find(&#123; <span class="attr">size</span>: <span class="string">'small'</span> &#125;).where(<span class="string">'createdDate'</span>).gt(oneYearAgo).exec(callback);</span><br></pre></td></tr></table></figure></p>
+<p><strong>删除</strong><br><code>model.remove</code> 静态方法可删除满足<code>contitions</code>的所有文档。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Tank.remove(&#123; <span class="attr">size</span>: <span class="string">'large'</span> &#125;, <span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  <span class="comment">// removed!</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p><strong>更新</strong><br>每个model有其自身的 <code>update</code> 方法用于在数据库中修改文档，无需将其返回你的应用。</p>
+<hr>
+<h3 id="Documents"><a href="#Documents" class="headerlink" title="Documents"></a><strong>Documents</strong></h3><p>Mongoose documents是存储于MongoDB中的点对点映射。每个document都是model的一个实例。<br><strong>查询</strong><br>有很多方法可以从MongoDB检索文档。详情见querying章节。</p>
+<p><strong>更新</strong><br>有很多种方式可以更新docments。下面是一种用 <code>findById</code> 的传统的方式：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Tank.findById(id, <span class="function"><span class="keyword">function</span> (<span class="params">err, tank</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  </span><br><span class="line">  tank.size = <span class="string">'large'</span>;</span><br><span class="line">  tank.save(<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">    res.send(tank);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>这个方法找到了mongo中第一条document，然后分配一个 <code>save</code> 命令。但是，如果我们不需要返回在应用中返回document，而是直接在数据库中直接更新属性。可以使用 <code>model.uopdate()</code> 。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Tank.update(&#123; <span class="attr">_id</span>: id &#125;, &#123; <span class="attr">$set</span>: &#123; <span class="attr">size</span>: <span class="string">'large'</span> &#125;&#125;, callback);</span><br></pre></td></tr></table></figure></p>
+<p>如果需要返回document，可以使用：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Tank.findByIdAndUpdate(id, &#123; <span class="attr">$set</span>: &#123; <span class="attr">size</span>: <span class="string">'large'</span> &#125;&#125;, <span class="function"><span class="keyword">function</span> (<span class="params">err, tank</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  res.send(tank);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p><strong>验证</strong><br>文档在存储之前验证。<br><code>findAndUpdate/Remove</code> 静态方法对至少一个document进行操作，然后只调用一次返回结果。</p>
+<hr>
+<h3 id="Sub-Docs"><a href="#Sub-Docs" class="headerlink" title="Sub Docs"></a><strong>Sub Docs</strong></h3><p>嵌套文档是由已有schema创建的文档的集合。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> childSchema = <span class="keyword">new</span> Schema(&#123; <span class="attr">name</span>: <span class="string">'string'</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> parentSchema = <span class="keyword">new</span> Schema(&#123;</span><br><span class="line">  children: [childSchema]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>嵌套文档和普通文档有着相同的特性。唯一的不同是嵌套文档不是单独的被存储，而是父元素存储时才被存储。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Parent = mongoose.model(<span class="string">'Parent'</span>, parentSchema);</span><br><span class="line"><span class="keyword">var</span> parent = <span class="keyword">new</span> Parent(&#123; <span class="attr">children</span>: [&#123; <span class="attr">name</span>: <span class="string">'Matt'</span> &#125;, &#123; <span class="attr">name</span>: <span class="string">'Sarah'</span> &#125;] &#125;)</span><br><span class="line">parent.children[<span class="number">0</span>].name = <span class="string">'Matthew'</span>;</span><br><span class="line">parent.save(callback);</span><br></pre></td></tr></table></figure></p>
+<p>如果在嵌套文档的中间件发生了错误，它将会冒泡到父元素的callback,此时error handling 被中断了。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">childSchema.pre(<span class="string">'save'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">next</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="string">'invalid'</span> == <span class="keyword">this</span>.name) <span class="keyword">return</span> next(<span class="keyword">new</span> <span class="built_in">Error</span>(<span class="string">'#sadpanda'</span>));</span><br><span class="line">  next();</span><br><span class="line">&#125;);</span><br><span class="line"><span class="keyword">var</span> parent = <span class="keyword">new</span> Parent(&#123; <span class="attr">children</span>: [&#123; <span class="attr">name</span>: <span class="string">'invalid'</span> &#125;] &#125;);</span><br><span class="line">parent.save(<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="built_in">console</span>.log(err.message) <span class="comment">// #sadpanda</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p><strong>找到嵌套文档</strong><br>每个文档有一个 <code>_id</code>。文档集合有特殊的id方法用于查找他的 <code>_id</code> 。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> doc = parent.children.id(id);</span><br></pre></td></tr></table></figure></p>
+<p><strong>添加嵌套文档</strong><br>MongooseArray方法， <code>push</code> 、 <code>unshift</code> 、<code>addToSet</code>等显式地向合适的类型中注入参数。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Parent = mongoose.model(<span class="string">'Parent'</span>);</span><br><span class="line"><span class="keyword">var</span> parent = <span class="keyword">new</span> Parent;</span><br><span class="line"><span class="comment">// create a comment</span></span><br><span class="line">parent.children.push(&#123; <span class="attr">name</span>: <span class="string">'Liesl'</span> &#125;);</span><br><span class="line"><span class="keyword">var</span> subdoc = parent.children[<span class="number">0</span>];</span><br><span class="line"><span class="built_in">console</span>.log(subdoc) <span class="comment">// &#123; _id: '501d86090d371bab2c0341c5', name: 'Liesl' &#125;</span></span><br><span class="line">subdoc.isNew; <span class="comment">// true</span></span><br><span class="line">parent.save(<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err)</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'Success!'</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>嵌套文档也可以通过MongooseArrays的 <code>create</code> 方法进行创建。<br><strong>删除嵌套文档</strong><br>每个嵌套文档有自身的 <code>remove</code> 方法。<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> doc = parent.children.id(id).remove();</span><br><span class="line">parent.save(<span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'the sub-doc was removed'</span>)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<hr>
+<h3 id="Queries"><a href="#Queries" class="headerlink" title="Queries"></a><strong>Queries</strong></h3><p>文档可被models的若干静态方法查询。<br>任何带有准确查询条件的model方法有两种执行方式：<br>当callback：</p>
+<ul>
+<li>被传入时，当结果返回callback时方法将会被立即执行。</li>
+<li>未传入时，会返回一个提供特殊接口 <code>QueryBuilder</code> 的 <code>Query</code> 实例。</li>
+</ul>
+<p>看看传入callback时发生了什么：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Person = mongoose.model(<span class="string">'Person'</span>, yourSchema);</span><br><span class="line"><span class="comment">// find each person with a last name matching 'Ghost', selecting the `name` and `occupation` fields</span></span><br><span class="line">Person.findOne(&#123; <span class="string">'name.last'</span>: <span class="string">'Ghost'</span> &#125;, <span class="string">'name occupation'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err, person</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'%s %s is a %s.'</span>, person.name.first, person.name.last, person.occupation) <span class="comment">// Space Ghost is a talk show host.</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>现在可知查询被立刻执行，然后结果返回callback。mongoose中的callback使用如下参数 callback(error, result)。如果查询时发生错误， <code>error</code> 参数将包含一个错误文档，<code>result</code> 将会是null。如果查询成功， <code>error</code> 将会是null,而 <code>result</code> 将会是查询的结果的填充。</p>
+<p>只要是在queryz中传入了callback, callback就遵循如下模式 <code>callback(error, result)</code>。  <code>result</code>取决于方法： <code>findOne</code> 是单个潜在的空文档， <code>find()</code> 是文档集合， <code>count</code> 是文档数量， <code>update</code> 是影响的文档数。</p>
+<p>看看未传入callback时发生了什么：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// find each person with a last name matching 'Ghost'</span></span><br><span class="line"><span class="keyword">var</span> query = Person.findOne(&#123; <span class="string">'name.last'</span>: <span class="string">'Ghost'</span> &#125;);</span><br><span class="line"><span class="comment">// selecting the `name` and `occupation` fields</span></span><br><span class="line">query.select(<span class="string">'name occupation'</span>);</span><br><span class="line"><span class="comment">// execute the query at a later time</span></span><br><span class="line">query.exec(<span class="function"><span class="keyword">function</span> (<span class="params">err, person</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (err) <span class="keyword">return</span> handleError(err);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">'%s %s is a %s.'</span>, person.name.first, person.name.last, person.occupation) <span class="comment">// Space Ghost is a talk show host.</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure></p>
+<p>返回的 <code>Query</code> 允许进行链式查询。深入的例子：<br><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Person</span><br><span class="line">.find(&#123; <span class="attr">occupation</span>: <span class="regexp">/host/</span> &#125;)</span><br><span class="line">.where(<span class="string">'name.last'</span>).equals(<span class="string">'Ghost'</span>)</span><br><span class="line">.where(<span class="string">'age'</span>).gt(<span class="number">17</span>).lt(<span class="number">66</span>)</span><br><span class="line">.where(<span class="string">'likes'</span>).in([<span class="string">'vaporizing'</span>, <span class="string">'talking'</span>])</span><br><span class="line">.limit(<span class="number">10</span>)</span><br><span class="line">.sort(<span class="string">'-occupation'</span>)</span><br><span class="line">.select(<span class="string">'name occupation'</span>)</span><br><span class="line">.exec(callback);</span><br></pre></td></tr></table></figure></p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2016/08/05/promise用法/" data-tooltip="promise用法" aria-label="FRÜHER: promise用法">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2016/07/27/Mongoose API/" title="Teilen auf Facebook">
+                    <i class="fa fa-facebook-official" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2016/07/27/Mongoose API/" title="Teilen auf Twitter">
+                    <i class="fa fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2016/07/27/Mongoose API/" title="Teilen auf Google Plus">
+                    <i class="fa fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 Feng. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2016/08/05/promise用法/" data-tooltip="promise用法" aria-label="FRÜHER: promise用法">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    <a class="post-action-btn btn btn--disabled">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2016/07/27/Mongoose API/" title="Teilen auf Facebook">
+                    <i class="fa fa-facebook-official" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2016/07/27/Mongoose API/" title="Teilen auf Twitter">
+                    <i class="fa fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2016/07/27/Mongoose API/" title="Teilen auf Google Plus">
+                    <i class="fa fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+    <i id="btn-close-shareoptions" class="fa fa-close"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2016/07/27/Mongoose API/">
+                    <i class="fa fa-facebook-official" aria-hidden="true"></i><span>Teilen auf Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2016/07/27/Mongoose API/">
+                    <i class="fa fa-twitter" aria-hidden="true"></i><span>Teilen auf Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2016/07/27/Mongoose API/">
+                    <i class="fa fa-google-plus" aria-hidden="true"></i><span>Teilen auf Google Plus</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-remove"></i>
+        </div>
+        
+            <h4 id="about-card-name">Feng</h4>
+        
+            <div id="about-card-bio"><p>author.bio</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+
+
+
+    </body>
+</html>

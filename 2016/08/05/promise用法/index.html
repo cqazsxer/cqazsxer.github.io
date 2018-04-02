@@ -1,0 +1,468 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="generator" content="(　ﾟ∀ﾟ) ﾉ♡">
+    <title>promise用法 - (　ﾟ∀ﾟ) ﾉ♡</title>
+    <meta name="author" content="Feng">
+    
+    
+    
+    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Feng","sameAs":[]},"articleBody":"链式调用和书写风格then 可以使用链式调用的写法原因在于，每一次执行该方法时总是会返回一个 Promise 对象。\n\n12345678var flag1 = false;var getPromise1 = () =&gt; &#123;\treturn new Promise((resolve, reject) =&gt; &#123;\t\tflag1 ? resolve(\"promise1 resolved\") : reject(\"promise1 rejected\");//....异步操作\t&#125;);&#125;;var getPromise2 = Promise.resolve('foo');// 推荐的写法\n如何在onRejected中抛出错误?\n\nthrow(&quot;something err&quot;) \nreturn Promise.reject(&quot;ERROR!!!&quot;)\n\n12345678910111213141516getPromise1()\t.then(\t\tresolve =&gt; resolve\t\t,reject =&gt; reject\t).then(\t\tresolve =&gt; &#123;\t\t\treturn (\"1.resolved +\"+resolve)\t\t&#125;,reject =&gt; &#123;\t\t\t// return \"error\" 不能冒泡到下个reject 或 被catch捕获\t\t\t// throw (\"ERROR!\") OK! \t\t\treturn Promise.reject(\"ERROR!!!\")\t\t&#125;\t).catch(\t\terr =&gt; console.log(\"err:\"+err)// 推荐的写法\t)\nPromise.all 和 Promise.racePromise.all 可以接收一个元素为 Promise 对象的数组作为参数，当这个数组里面所有的 Promise 对象都变为 resolve 时，该方法才会返回。\n123456789101112131415var p1 = new Promise((resolve) =&gt; &#123;    setTimeout(() =&gt; &#123;        resolve(\"Hello\");     &#125;, 3000);&#125;);var p2 = new Promise((resolve) =&gt; &#123;    setTimeout(() =&gt; &#123;        resolve(\"World\");    &#125;, 1000);&#125;);Promise.all([p1, p2]).then((result) =&gt; &#123;    console.log(result); // [\"Hello\", \"World\"]&#125;);\nPromise.race 可以接收一个元素为 Promise 对象的数组作为参数，不同的是数组里面所有的 Promise 对象都改变状态时，方法即返回。\n","dateCreated":"2016-08-05T11:04:10+08:00","dateModified":"2018-03-23T11:11:49+08:00","datePublished":"2016-08-05T11:04:10+08:00","description":"链式调用和书写风格then 可以使用链式调用的写法原因在于，每一次执行该方法时总是会返回一个 Promise 对象。","headline":"promise用法","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://yoursite.com/2016/08/05/promise用法/"},"publisher":{"@type":"Organization","name":"Feng","sameAs":[]},"url":"http://yoursite.com/2016/08/05/promise用法/","keywords":"es6"}</script>
+    <meta name="description" content="链式调用和书写风格then 可以使用链式调用的写法原因在于，每一次执行该方法时总是会返回一个 Promise 对象。">
+<meta name="keywords" content="es6">
+<meta property="og:type" content="blog">
+<meta property="og:title" content="promise用法">
+<meta property="og:url" content="http://yoursite.com/2016/08/05/promise用法/index.html">
+<meta property="og:site_name" content="(　ﾟ∀ﾟ) ﾉ♡">
+<meta property="og:description" content="链式调用和书写风格then 可以使用链式调用的写法原因在于，每一次执行该方法时总是会返回一个 Promise 对象。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-03-23T03:11:49.303Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="promise用法">
+<meta name="twitter:description" content="链式调用和书写风格then 可以使用链式调用的写法原因在于，每一次执行该方法时总是会返回一个 Promise 对象。">
+    
+    
+        
+    
+    
+    
+    
+    
+    <!--STYLES-->
+    <link rel="stylesheet" href="/assets/css/font-awesome.css">
+    <link rel="stylesheet" href="/assets/css/jquery.fancybox.css">
+    <link rel="stylesheet" href="/assets/css/thumbs.css">
+    <link rel="stylesheet" href="/assets/css/tranquilpeak.css">
+    <!--STYLES END-->
+    
+
+    
+</head>
+
+    <body>
+        <div id="blog">
+            <!-- Define author's picture -->
+
+
+    
+
+<header id="header" data-behavior="4">
+    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
+    <div class="header-title">
+        <a class="header-title-link" href="/ ">(　ﾟ∀ﾟ) ﾉ♡</a>
+    </div>
+    
+        
+            <a  class="header-right-picture "
+                href="#about">
+        
+        
+        </a>
+    
+</header>
+
+            <!-- Define author's picture -->
+
+
+<nav id="sidebar" data-behavior="4">
+    <div class="sidebar-container">
+        
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/ "
+                            
+                            title="Home"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-home" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Home</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-categories"
+                            
+                            title="Kategorien"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-bookmark" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Kategorien</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-tags"
+                            
+                            title="Tags"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-tags" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Tags</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/all-archives"
+                            
+                            title="Archiv"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-archive" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Archiv</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link open-algolia-search"
+                             href="#search"
+                            
+                            title="Suche"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-search" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Suche</span>
+                    </a>
+            </li>
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="#about"
+                            
+                            title="Über"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-question" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">Über</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+        </ul>
+        
+            <ul class="sidebar-buttons">
+            
+                <li class="sidebar-button">
+                    
+                        <a  class="sidebar-button-link "
+                             href="/atom.xml"
+                            
+                            title="RSS"
+                        >
+                    
+                        <i class="sidebar-button-icon fa fa-lg fa-rss" aria-hidden="true"></i>
+                        <span class="sidebar-button-desc">RSS</span>
+                    </a>
+            </li>
+            
+        </ul>
+        
+    </div>
+</nav>
+
+            
+            <div id="main" data-behavior="4"
+                 class="
+                        hasCoverMetaIn
+                        ">
+                
+<article class="post">
+    
+    
+        <div class="post-header main-content-wrap text-left">
+    
+        <h1 class="post-title">
+            promise用法
+        </h1>
+    
+    
+        <div class="post-meta">
+    <time datetime="2016-08-05T11:04:10+08:00">
+	
+		    05 8月 2016
+    	
+    </time>
+    
+</div>
+
+    
+</div>
+
+    
+    <div class="post-content markdown">
+        <div class="main-content-wrap">
+            <h2 id="链式调用和书写风格"><a href="#链式调用和书写风格" class="headerlink" title="链式调用和书写风格"></a>链式调用和书写风格</h2><p><code>then</code> 可以使用链式调用的写法原因在于，每一次执行该方法时总是会返回一个 Promise 对象。</p>
+<a id="more"></a>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> flag1 = <span class="literal">false</span>;</span><br><span class="line"><span class="keyword">var</span> getPromise1 = <span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">		flag1 ? resolve(<span class="string">"promise1 resolved"</span>) : reject(<span class="string">"promise1 rejected"</span>);<span class="comment">//....异步操作</span></span><br><span class="line"></span><br><span class="line">	&#125;);</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">var</span> getPromise2 = <span class="built_in">Promise</span>.resolve(<span class="string">'foo'</span>);<span class="comment">// 推荐的写法</span></span><br></pre></td></tr></table></figure>
+<p>如何在<code>onRejected</code>中抛出错误?</p>
+<ul>
+<li><code>throw(&quot;something err&quot;)</code> </li>
+<li><code>return Promise.reject(&quot;ERROR!!!&quot;)</code></li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">getPromise1()</span><br><span class="line">	.then(</span><br><span class="line">		resolve =&gt; resolve</span><br><span class="line">		,reject =&gt; reject</span><br><span class="line">	).then(</span><br><span class="line">		resolve =&gt; &#123;</span><br><span class="line">			<span class="keyword">return</span> (<span class="string">"1.resolved +"</span>+resolve)</span><br><span class="line">		&#125;,reject =&gt; &#123;</span><br><span class="line">			<span class="comment">// return "error" 不能冒泡到下个reject 或 被catch捕获</span></span><br><span class="line">			<span class="comment">// throw ("ERROR!") OK! </span></span><br><span class="line">			<span class="keyword">return</span> <span class="built_in">Promise</span>.reject(<span class="string">"ERROR!!!"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	).catch(</span><br><span class="line">		err =&gt; <span class="built_in">console</span>.log(<span class="string">"err:"</span>+err)<span class="comment">// 推荐的写法</span></span><br><span class="line"></span><br><span class="line">	)</span><br></pre></td></tr></table></figure>
+<h2 id="Promise-all-和-Promise-race"><a href="#Promise-all-和-Promise-race" class="headerlink" title="Promise.all 和 Promise.race"></a>Promise.all 和 Promise.race</h2><p><code>Promise.all</code> 可以接收一个元素为 <code>Promise</code> 对象的数组作为参数，当这个数组里面所有的 Promise 对象都变为 <code>resolve</code> 时，该方法才会返回。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> p1 = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve</span>) =&gt;</span> &#123;</span><br><span class="line">    setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">        resolve(<span class="string">"Hello"</span>); </span><br><span class="line">    &#125;, <span class="number">3000</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> p2 = <span class="keyword">new</span> <span class="built_in">Promise</span>(<span class="function">(<span class="params">resolve</span>) =&gt;</span> &#123;</span><br><span class="line">    setTimeout(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">        resolve(<span class="string">"World"</span>);</span><br><span class="line">    &#125;, <span class="number">1000</span>);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="built_in">Promise</span>.all([p1, p2]).then(<span class="function">(<span class="params">result</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(result); <span class="comment">// ["Hello", "World"]</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><code>Promise.race</code> 可以接收一个元素为 <code>Promise</code> 对象的数组作为参数，不同的是数组里面所有的 Promise 对象都<strong>改变状态</strong>时，方法即返回。</p>
+
+            
+
+        </div>
+    </div>
+    <div id="post-footer" class="post-footer main-content-wrap">
+        
+            <div class="post-footer-tags">
+                <span class="text-color-light text-small">GETAGGT IN</span><br/>
+                
+    <a class="tag tag--primary tag--small t-link" href="/tags/es6/">es6</a>
+
+            </div>
+        
+        
+            <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2016/08/24/sass-简明使用/" data-tooltip="sass 简明使用" aria-label="FRÜHER: sass 简明使用">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2016/07/27/Mongoose API/" data-tooltip="Mongoose API" aria-label="NÄCHSTER: Mongoose API">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2016/08/05/promise用法/" title="Teilen auf Facebook">
+                    <i class="fa fa-facebook-official" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2016/08/05/promise用法/" title="Teilen auf Twitter">
+                    <i class="fa fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2016/08/05/promise用法/" title="Teilen auf Google Plus">
+                    <i class="fa fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+        
+        
+            
+        
+    </div>
+</article>
+
+
+
+                <footer id="footer" class="main-content-wrap">
+    <span class="copyrights">
+        Copyrights &copy; 2018 Feng. All Rights Reserved.
+    </span>
+</footer>
+
+            </div>
+            
+                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
+                    <div class="post-actions-wrap">
+    <nav>
+        <ul class="post-actions post-action-nav">
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2016/08/24/sass-简明使用/" data-tooltip="sass 简明使用" aria-label="FRÜHER: sass 简明使用">
+                
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                    <span class="hide-xs hide-sm text-small icon-ml">FRÜHER</span>
+                </a>
+            </li>
+            <li class="post-action">
+                
+                    
+                    <a class="post-action-btn btn btn--default tooltip--top" href="/2016/07/27/Mongoose API/" data-tooltip="Mongoose API" aria-label="NÄCHSTER: Mongoose API">
+                
+                    <span class="hide-xs hide-sm text-small icon-mr">NÄCHSTER</span>
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <ul class="post-actions post-action-share">
+        <li class="post-action hide-lg hide-md hide-sm">
+            <a class="post-action-btn btn btn--default btn-open-shareoptions" href="#btn-open-shareoptions" aria-label="Diesen Beitrag teilen">
+                <i class="fa fa-share-alt" aria-hidden="true"></i>
+            </a>
+        </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2016/08/05/promise用法/" title="Teilen auf Facebook">
+                    <i class="fa fa-facebook-official" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2016/08/05/promise用法/" title="Teilen auf Twitter">
+                    <i class="fa fa-twitter" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+            
+            
+            <li class="post-action hide-xs">
+                <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2016/08/05/promise用法/" title="Teilen auf Google Plus">
+                    <i class="fa fa-google-plus" aria-hidden="true"></i>
+                </a>
+            </li>
+        
+        
+            
+        
+        <li class="post-action">
+            
+                <a class="post-action-btn btn btn--default" href="#" aria-label="Nach oben">
+            
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
+        </li>
+    </ul>
+</div>
+
+
+                </div>
+                <div id="share-options-bar" class="share-options-bar" data-behavior="4">
+    <i id="btn-close-shareoptions" class="fa fa-close"></i>
+    <ul class="share-options">
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://yoursite.com/2016/08/05/promise用法/">
+                    <i class="fa fa-facebook-official" aria-hidden="true"></i><span>Teilen auf Facebook</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=http://yoursite.com/2016/08/05/promise用法/">
+                    <i class="fa fa-twitter" aria-hidden="true"></i><span>Teilen auf Twitter</span>
+                </a>
+            </li>
+        
+            
+            
+            <li class="share-option">
+                <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=http://yoursite.com/2016/08/05/promise用法/">
+                    <i class="fa fa-google-plus" aria-hidden="true"></i><span>Teilen auf Google Plus</span>
+                </a>
+            </li>
+        
+    </ul>
+</div>
+
+            
+        </div>
+        
+
+
+<div id="about">
+    <div id="about-card">
+        <div id="about-btn-close">
+            <i class="fa fa-remove"></i>
+        </div>
+        
+            <h4 id="about-card-name">Feng</h4>
+        
+            <div id="about-card-bio"><p>author.bio</p>
+</div>
+        
+        
+            <div id="about-card-job">
+                <i class="fa fa-briefcase"></i>
+                <br/>
+                <p>author.job</p>
+
+            </div>
+        
+        
+    </div>
+</div>
+
+        
+        
+<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
+        <!--SCRIPTS-->
+<script src="/assets/js/jquery.js"></script>
+<script src="/assets/js/jquery.fancybox.js"></script>
+<script src="/assets/js/thumbs.js"></script>
+<script src="/assets/js/tranquilpeak.js"></script>
+<!--SCRIPTS END-->
+
+    
+
+
+
+    </body>
+</html>
